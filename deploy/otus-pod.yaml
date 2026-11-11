@@ -1,0 +1,155 @@
+# podman kube play deploy/otus-pod.yaml   (after building images and creating the secrets)
+# Containers share the pod's network namespace: only Caddy is published to the host.
+# Secrets are mounted as files (*_FILE variables), never passed as env values, so they
+# don't appear in `podman inspect`; each container mounts only its own secret.
+# Every container drops its capabilities (db keeps the few its entrypoint needs), can't
+# gain privileges, and has a read-only root filesystem.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: otus
+spec:
+  restartPolicy: Always
+  containers:
+    - name: db
+      image: localhost/otus-db:latest
+      args: ["-c", "listen_addresses=localhost"]
+      env:
+        - name: POSTGRES_USER
+          value: postgres
+        - name: POSTGRES_PASSWORD_FILE
+          value: /run/secrets/otus-db/postgres-password
+        - name: OTUS_APP_PASSWORD_FILE
+          value: /run/secrets/otus-db/app-password
+        # passwords on the socket and loopback too: other containers share the pod's loopback
+        - name: POSTGRES_INITDB_ARGS
+          value: --auth-local=scram-sha-256 --auth-host=scram-sha-256
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+          # the entrypoint fixes data-dir ownership and drops from root to the postgres user
+          add: ["CHOWN", "DAC_OVERRIDE", "FOWNER", "SETGID", "SETUID"]
+      volumeMounts:
+        - name: pgdata
+          mountPath: /var/lib/postgresql
+        - name: db-secrets
+          mountPath: /run/secrets/otus-db
+          readOnly: true
+        - name: db-run
+          mountPath: /var/run/postgresql
+        - name: db-tmp
+          mountPath: /tmp
+
+    - name: backend
+      image: localhost/otus-backend:latest
+      env:
+        - name: DATABASE_URL_FILE
+          value: /run/secrets/otus-backend/database-url
+        - name: FORTY_TWO_CLIENT_ID_FILE
+          value: /run/secrets/otus-backend/forty-two-client-id
+        - name: FORTY_TWO_CLIENT_SECRET_FILE
+          value: /run/secrets/otus-backend/forty-two-client-secret
+        - name: BANK_ACCOUNT_KEY_FILE
+          value: /run/secrets/otus-backend/bank-account-key
+        - name: FILE_ENCRYPTION_KEY_FILE
+          value: /run/secrets/otus-backend/file-encryption-key
+        - name: FORTY_TWO_REDIRECT_URI
+          value: https://localhost:8443/api/auth/42/callback
+        # admin surface (?surface=admin): register this exact URI in the 42 app too,
+        # or admin 42 login fails. Without it the backend 404s that surface.
+        - name: FORTY_TWO_ADMIN_REDIRECT_URI
+          value: https://admin.localhost:8443/api/auth/42/callback
+        # only students whose primary campus is this one may log in (42 Gyeongsan)
+        - name: FORTY_TWO_CAMPUS_ID
+          value: "69"
+        # Demo login: no password, and its users can approve their own submissions.
+        # Allowed only on a localhost APP_ORIGIN unless DEMO_LOGIN_ALLOW_PUBLIC=true.
+        - name: DEMO_LOGIN_ENABLED
+          value: "true"
+        - name: APP_ORIGIN
+          value: https://localhost:8443
+        # student + admin origins (the admin app is on https://admin.localhost:8443 locally).
+        # APP_ORIGINS wins over APP_ORIGIN; deploy/start-podman.sh always overrides it.
+        - name: APP_ORIGINS
+          value: https://localhost:8443,https://admin.localhost:8443
+        # every upload is scanned; uploads are refused (503) while the scanner is down
+        - name: CLAMAV_ADDR
+          value: 127.0.0.1:3310
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: uploads
+          mountPath: /data/uploads
+        - name: backend-secrets
+          mountPath: /run/secrets/otus-backend
+          readOnly: true
+
+    - name: clamav
+      image: localhost/otus-clamav:latest
+      # clamd on the pod's loopback; signatures (downloaded on first start) live in a volume
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 100
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: clamav-db
+          mountPath: /var/lib/clamav
+        - name: clamav-tmp
+          mountPath: /tmp
+
+    - name: web
+      image: localhost/otus-web:latest
+      env:
+        - name: SITE_ADDRESS
+          value: localhost
+      ports:
+        - containerPort: 8443
+          hostPort: 8443
+      securityContext:
+        allowPrivilegeEscalation: false
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop: ["ALL"]
+      volumeMounts:
+        - name: caddy-data
+          mountPath: /data
+        - name: caddy-config
+          mountPath: /config
+
+  volumes:
+    - name: db-secrets
+      secret:
+        secretName: otus-db
+    - name: backend-secrets
+      secret:
+        secretName: otus-backend
+    - name: pgdata
+      persistentVolumeClaim:
+        claimName: otus-pgdata
+    - name: uploads
+      persistentVolumeClaim:
+        claimName: otus-uploads
+    - name: caddy-data
+      persistentVolumeClaim:
+        claimName: otus-caddy-data
+    - name: caddy-config
+      emptyDir: {}
+    - name: clamav-db
+      persistentVolumeClaim:
+        claimName: otus-clamav-db
+    - name: clamav-tmp
+      emptyDir: {}
+    - name: db-run
+      emptyDir: {}
+    - name: db-tmp
+      emptyDir: {}

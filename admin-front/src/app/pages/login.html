@@ -1,0 +1,42 @@
+<main class="card">
+  <p class="logo">{{ brand }}</p>
+  <h1>관리자 로그인</h1>
+  <p class="desc">운영·회계 담당자 계정으로 로그인하세요.</p>
+
+  @if (methods(); as m) {
+    <!-- @if (m.forty_two) {
+      <button appButton type="button" class="wide" [disabled]="busy()" (click)="loginWith42()">
+        42 계정으로 로그인 →
+      </button>
+    } -->
+    @if (m.demo) {
+      <form class="demo" (ngSubmit)="loginAsDemo()">
+        <label for="demo-login">데모 로그인 (개발용)</label>
+        <div class="demo-row">
+          <input
+            id="demo-login"
+            name="login"
+            autocomplete="off"
+            placeholder="login"
+            [ngModel]="demoLogin()"
+            (ngModelChange)="demoLogin.set($event)"
+          />
+          <button
+            appButton
+            variant="secondary"
+            type="submit"
+            [disabled]="busy() || !demoLogin().trim()"
+          >
+            로그인
+          </button>
+        </div>
+      </form>
+    }
+    @if (!m.forty_two && !m.demo) {
+      <p class="error" role="alert">사용할 수 있는 로그인 방법이 없어요.</p>
+    }
+  }
+  @if (error(); as message) {
+    <p class="error" role="alert">{{ message }}</p>
+  }
+</main>

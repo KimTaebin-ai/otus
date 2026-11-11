@@ -1,0 +1,40 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  height: var(--height-badge);
+  padding: 0 var(--space-badge-x);
+  border-radius: var(--radius-pill);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+}
+
+:host([data-status='draft']) {
+  background: var(--badge-draft-bg);
+  color: var(--badge-draft-fg);
+}
+
+:host([data-status='pending_review']) {
+  background: var(--badge-pending-review-bg);
+  color: var(--badge-pending-review-fg);
+}
+
+:host([data-status='approved']) {
+  background: var(--badge-approved-bg);
+  color: var(--badge-approved-fg);
+}
+
+:host([data-status='revision_requested']) {
+  background: var(--badge-revision-requested-bg);
+  color: var(--badge-revision-requested-fg);
+}
+
+:host([data-status='resubmitted']) {
+  background: var(--badge-resubmitted-bg);
+  color: var(--badge-resubmitted-fg);
+}
+
+:host([data-status='missing']) {
+  background: var(--badge-missing-bg);
+  color: var(--badge-missing-fg);
+}

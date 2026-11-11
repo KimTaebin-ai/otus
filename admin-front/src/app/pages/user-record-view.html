@@ -1,0 +1,101 @@
+<app-page-header eyebrow="사용자 관리" [heading]="title()" [description]="summary()">
+  @if (review(); as r) {
+    <button
+      appButton
+      headerAction
+      type="button"
+      [variant]="r.waiting ? 'primary' : 'secondary'"
+      [routerLink]="['/submissions', r.id]"
+      [queryParams]="{ month: r.month }"
+    >
+      {{ r.label }}
+    </button>
+  } @else {
+    <button appButton headerAction variant="secondary" type="button" routerLink="/submissions">
+      이번 달 제출 목록 →
+    </button>
+  }
+</app-page-header>
+
+<div class="cards">
+  @for (card of cards(); track card.label) {
+    <app-stat-card layout="summary" [label]="card.label" [value]="card.value" [sub]="card.sub" />
+  }
+</div>
+
+@if (view().bankPending; as pending) {
+  <app-bank-review
+    [pending]="pending"
+    [current]="view().bank"
+    [canDecide]="canDecideBank()"
+    [busy]="bankBusy()"
+    [error]="bankError()"
+    (decide)="bankDecision.emit($event)"
+  />
+}
+
+<div class="columns">
+  <app-card heading="검토 및 변경 기록" footnote="각 제출 버전과 검토 결과는 시간순으로 기록돼요.">
+    <app-data-table [loose]="true">
+      <table>
+        <colgroup>
+          <col class="col-when" />
+          <col class="col-action" />
+          <col />
+        </colgroup>
+        <thead>
+          <tr>
+            <th scope="col">일시 / 제출 월</th>
+            <th scope="col">처리 내역</th>
+            <th scope="col">담당자</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows(); track $index) {
+            <tr>
+              <td>
+                <span class="when">{{ row.when }}</span>
+                <span class="month">{{ row.month }}</span>
+              </td>
+              <td>{{ row.action }}</td>
+              <td class="muted">{{ row.actor }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-data-table>
+    @if (rows().length === 0) {
+      <p class="empty">{{ recordsEmpty() }}</p>
+    }
+  </app-card>
+
+  <app-card heading="최초 제출 서류">
+    <p class="caption">{{ caption() }}</p>
+    <ul class="docs">
+      @for (doc of docs(); track doc.fileId) {
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5 M9 13h6 M9 17h6"
+            />
+          </svg>
+          <span class="doc-name">{{ doc.name }}</span>
+          @if (canOpenOriginals()) {
+            <a class="open" [href]="'/api/files/' + doc.fileId" target="_blank" rel="noopener">
+              열기 ↗
+            </a>
+          } @else {
+            <span class="open disabled" aria-disabled="true">열기 ↗</span>
+          }
+        </li>
+      }
+    </ul>
+    @if (docs().length === 0) {
+      <p class="empty">{{ docsEmpty() }}</p>
+    }
+    @if (docs().length > 0 && !canOpenOriginals()) {
+      <p class="note" role="note">{{ noOriginals }}</p>
+    }
+    <p class="more">월별 고용보험가입내역서는 해당 제출 월에서 확인할 수 있어요.</p>
+  </app-card>
+</div>

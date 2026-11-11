@@ -1,0 +1,71 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+app-page-header {
+  margin-bottom: calc(var(--space-1) * 1.5);
+}
+
+p {
+  margin: 0;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.choice {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  cursor: pointer;
+}
+
+.choice.fixed {
+  color: var(--color-muted);
+  cursor: default;
+}
+
+input[type='checkbox'] {
+  margin: 0;
+  accent-color: var(--color-teal);
+}
+
+.col-folder {
+  width: 40%;
+}
+
+.footnote {
+  font-size: var(--font-size-caption);
+  color: var(--color-muted);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.note {
+  font-size: var(--font-size-caption);
+  color: var(--color-amber);
+}
+
+td {
+  word-break: keep-all;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 720px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .actions {
+    flex-wrap: wrap;
+  }
+}

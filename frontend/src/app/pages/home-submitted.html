@@ -1,0 +1,128 @@
+<!-- final U03-home-submitted.png -->
+<header class="page-head with-month">
+  <div>
+    <p class="eyebrow">나의 지원금</p>
+    <h1>{{ me()?.display_name }}님, 반가워요!</h1>
+    <p class="desc">지금 필요한 서류부터, 차근차근 함께 확인해요.</p>
+  </div>
+  <span class="page-month">{{ formatMonth(cycle().target_month) }}</span>
+</header>
+
+<div class="columns">
+  <div class="main-col">
+    @if (!me()?.employed) {
+      <app-hours-hero [studyHours]="me()?.study_hours ?? null" />
+    }
+    @if (hero(); as copy) {
+      <section class="hero" [attr.data-status]="current().status" aria-labelledby="hero-title">
+        <div class="hero-top">
+          <p class="hero-eyebrow">
+            {{
+              current().status === 'revision_requested'
+                ? '제출한 서류를 고쳐서 다시 내야 해요'
+                : '이번 달 서류 제출을 마쳤어요'
+            }}
+          </p>
+          <span class="tag" [attr.data-status]="current().status">{{ copy.tag }}</span>
+        </div>
+        <div class="hero-main">
+          <div class="hero-text">
+            <h2 id="hero-title">{{ copy.title }}</h2>
+            <p class="hero-body">
+              @for (line of copy.body; track $index) {
+                {{ line }}<br />
+              }
+            </p>
+            <button
+              appButton
+              [variant]="current().status === 'revision_requested' ? 'primary' : 'secondary'"
+              size="sm"
+              type="button"
+              [routerLink]="copy.link"
+            >
+              {{ copy.action }}
+            </button>
+          </div>
+          @if (current().status === 'revision_requested') {
+            <div class="received needs-fix">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 8v5 M12 16.5v.01 M10.3 4.2L2.8 17.5A2 2 0 0 0 4.5 20.5h15a2 2 0 0 0 1.7-3L13.7 4.2a2 2 0 0 0-3.4 0z"
+                />
+              </svg>
+              <strong>보완 필요</strong>
+              <span>새 파일로 다시 제출</span>
+            </div>
+          } @else if (current().submitted_at; as at) {
+            <div class="received">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 12.5l4.5 4.5L19 7.5" />
+              </svg>
+              <strong>접수 완료</strong>
+              <span>{{ monthDay(at) }} {{ hourMinute(at) }}</span>
+            </div>
+          }
+        </div>
+      </section>
+    }
+
+    <app-card heading="최근 제출 내역">
+      <a cardAction class="link" routerLink="/history">전체 보기 →</a>
+      <ul class="recent">
+        @for (item of recent(); track item.id) {
+          <li>
+            <a routerLink="/history">
+              <span class="recent-text">
+                <span class="recent-title">{{ rowTitle(item) }}</span>
+                @if (item.submitted_at; as at) {
+                  <span class="recent-meta">{{ dotMonthDay(at) }} 제출</span>
+                }
+              </span>
+              <app-status-badge [status]="item.status" />
+              <svg class="chevron" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            </a>
+          </li>
+        }
+      </ul>
+      @if (!hasMonthly()) {
+        <p class="note">앞으로 제출한 월별 서류가 이곳에 쌓여요.</p>
+      }
+    </app-card>
+  </div>
+
+  <div class="side-col">
+    <app-card class="know" heading="알아두면 편해요">
+      <div class="faq">
+        <h3>언제까지 제출하면 되나요?</h3>
+        <p class="answer lead">
+          {{ monthDay(cycle().opens_at) }}부터<br />
+          {{ monthDay(lastMoment(cycle().closes_at)) }}
+          {{ spokenTime(lastMoment(cycle().closes_at)) }}까지예요.
+        </p>
+      </div>
+      <hr />
+      <div class="faq notice">
+        <h3>취업 상태, 꼭 확인하세요</h3>
+        <p class="answer state">
+          현재 저장된 상태: <strong>{{ me()?.employed ? '취업 중' : '미취업' }}</strong>
+        </p>
+        <ul class="rules">
+          <li>
+            고용보험 가입자·타 정부지원금 수령자 등 지원금 미대상자는 서류를 제출하지 말고 "취업 중"
+            상태로 변경해주세요.
+          </li>
+          <li>
+            고용보험 신고는 최대 45일 늦어질 수 있어요. 실제로 근무 중인데 ‘미가입’으로 조회되더라도
+            서류를 제출하면 안 돼요.
+          </li>
+          <li>근로 사실을 숨기고 지원금을 신청하면 부정수급으로 처리되고 전액 환수돼요.</li>
+          <li>현재 근로 중이거나 고용보험 가입 예정이면 서류를 제출하지 마세요.</li>
+          <li>서류 조건 미비·기한 초과는 지급이 불가해요. 서류 오류일 때만 개별 연락드려요.</li>
+        </ul>
+      </div>
+    </app-card>
+    <app-profile-card [employment]="employment()" [account]="account()" />
+  </div>
+</div>

@@ -1,0 +1,156 @@
+<header class="page-head">
+  <p class="eyebrow">처음 한 번만 등록해요</p>
+  <h1>{{ me()?.display_name }}님, 첫 서류를 함께 준비해볼까요?</h1>
+  <p class="desc">처음에는 4가지, 다음 달부터는 고용보험가입내역서만 제출해요.</p>
+</header>
+
+@if (locked()) {
+  <app-info-box
+    tone="amber"
+    [heading]="
+      ended() ? month() + '월 최초 서류 접수가 마감되었어요.' : '아직 접수 기간이 아니에요.'
+    "
+  >
+    현재는 PDF 업로드와 최종 제출을 할 수 없습니다.
+    {{ ended() ? '다음 접수 기간에' : '접수 기간에' }} 서류를 등록해주세요.
+  </app-info-box>
+} @else {
+  <app-info-box heading="이번 달 접수 기간" [detail]="period()">
+    서류는 모두 PDF로 올려주세요. 준비가 끝난 뒤 ‘첫 서류 제출하기’를 누르면 완료돼요.
+  </app-info-box>
+}
+
+@if (loadError(); as message) {
+  <p class="load-error" role="alert">{{ message }}</p>
+}
+
+<app-doc-guide [docTypes]="docTypes()" [collapsible]="true" [startOpen]="false" />
+
+<div class="columns">
+  <div class="main">
+    <app-card heading="준비할 서류 4가지">
+      <app-count-pill cardAction [done]="readyCount()" [total]="docTypes().length" />
+      <div class="rows">
+        @for (type of docTypes(); track type) {
+          <app-upload-slot
+            [submissionId]="draft()?.id ?? null"
+            [docType]="type"
+            [description]="description(type)"
+            [file]="fileOf(type)"
+            [disabled]="!isOpen() || submitting()"
+            [lockedLabel]="ended() ? '기간 종료' : '접수 전'"
+            [invalid]="attempted()"
+            (uploaded)="onUploaded($event)"
+            (uploadedFile)="onUploadedFile(type, $event)"
+          />
+        }
+      </div>
+    </app-card>
+  </div>
+
+  <div class="aside">
+    <app-card heading="지원금을 받을 계좌" class="account">
+      <div class="fields">
+        <div class="field">
+          <label for="bank">은행</label>
+          <select
+            id="bank"
+            [attr.aria-invalid]="bankInvalid()"
+            [disabled]="!isOpen() || submitting()"
+            (change)="onBank($event)"
+          >
+            <option value="" disabled [selected]="!account.bank()">은행 선택</option>
+            @for (bank of banks; track bank) {
+              <option [value]="bank" [selected]="bank === account.bank()">{{ bank }}</option>
+            }
+          </select>
+        </div>
+        <div class="field">
+          <label for="account-number">계좌번호</label>
+          <input
+            id="account-number"
+            type="text"
+            inputmode="numeric"
+            autocomplete="off"
+            spellcheck="false"
+            maxlength="30"
+            placeholder="- 없이 숫자만 입력"
+            [disabled]="!isOpen() || submitting()"
+            [value]="account.number()"
+            [attr.aria-invalid]="numberInvalid()"
+            [attr.aria-describedby]="numberInvalid() ? 'account-number-error' : null"
+            (input)="onNumber($event)"
+            (blur)="touchedNumber.set(true)"
+          />
+          @if (numberInvalid()) {
+            <p id="account-number-error" class="error" role="alert">
+              계좌번호는 숫자 8~20자리로 입력해주세요.
+            </p>
+          }
+        </div>
+        <div class="field">
+          <label for="holder">예금주</label>
+          <input
+            id="holder"
+            type="text"
+            autocomplete="off"
+            maxlength="30"
+            placeholder="통장사본에 적힌 예금주 이름"
+            [disabled]="!isOpen() || submitting()"
+            [value]="holder()"
+            [attr.aria-invalid]="holderInvalid()"
+            (input)="holderInput.set($any($event.target).value)"
+          />
+        </div>
+      </div>
+      <p class="hint">
+        위의 통장사본 PDF와 함께 운영팀이 확인해요. 본인 명의 계좌만 등록할 수 있어요.
+      </p>
+    </app-card>
+
+    <!-- two short notes: folded by default so the right column does not grow the page -->
+    <app-card heading="도움말" class="help">
+      <details>
+        <summary>이렇게 준비하면 좋아요</summary>
+        <ul class="checks">
+          <li>내 이름으로 된 서류인가요?</li>
+          <li>모든 페이지가 들어 있나요?</li>
+          <li>글자가 선명하게 보이나요?</li>
+        </ul>
+        <p class="muted">준비한 파일은 임시 저장해두고, 다음에 이어서 마무리할 수 있어요.</p>
+      </details>
+      <!-- "서류 준비 도움말 →" is out of scope and hidden (docs/design/README.md) -->
+      <details>
+        <summary>제출한 다음에는요</summary>
+        <p class="muted">
+          운영팀이 서류를 확인해요. 기다리는 동안에도 홈을 이용할 수 있고, 진행 상황은 ‘내가 낸
+          서류’에 표시돼요.
+        </p>
+      </details>
+    </app-card>
+  </div>
+</div>
+
+<footer class="bar">
+  @if (submitError(); as message) {
+    <p class="status error" role="alert">{{ message }}</p>
+  } @else if (showMissing()) {
+    <p class="status error" role="alert">빨간색으로 표시된 빠진 항목을 채워주세요.</p>
+  } @else {
+    <p class="status" aria-live="polite">{{ status() }}</p>
+  }
+  <div class="actions">
+    @if (locked()) {
+      <button appButton type="button" disabled>
+        {{ ended() ? '제출 기간 종료' : '접수 시작 전' }}
+      </button>
+    } @else {
+      <button appButton variant="secondary" type="button" [disabled]="!canSave()" (click)="save()">
+        임시 저장
+      </button>
+      <button appButton type="button" [disabled]="!canTrySubmit()" (click)="submit()">
+        첫 서류 제출하기
+      </button>
+    }
+  </div>
+</footer>

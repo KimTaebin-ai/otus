@@ -1,0 +1,157 @@
+<input
+  #picker
+  type="file"
+  accept="application/pdf,.pdf"
+  hidden
+  [attr.aria-label]="title() + ' 파일 고르기'"
+  (change)="onPicked(picker)"
+/>
+
+@if (mode() === 'kept') {
+  <div class="row kept" aria-disabled="true">
+    <span class="icon-box pdf">PDF</span>
+    <div class="text">
+      <span class="name">{{ title() }}</span>
+      <span class="meta">{{ description() || '기존 제출본 유지 · 변경 없음' }}</span>
+    </div>
+    <span class="action muted">유지</span>
+  </div>
+} @else {
+  <div
+    class="row"
+    [class.done]="!!current() && !busy() && mode() !== 'view'"
+    [class.invalid]="invalid() && !current()"
+    [class.pickable]="rowPickable() || canPreview()"
+    (click)="onRowClick($event, picker)"
+  >
+    @if (state(); as s) {
+      @if (s.kind === 'uploading') {
+        <span class="icon-box">
+          <ng-container *ngTemplateOutlet="docIcon" />
+        </span>
+        <div class="text">
+          <span class="name">{{ title() }}</span>
+          <span class="meta">{{ s.name }}</span>
+          <div
+            class="progress"
+            role="progressbar"
+            aria-valuemin="0"
+            aria-valuemax="100"
+            [attr.aria-valuenow]="s.progress"
+            [attr.aria-label]="title() + ' 업로드 진행률'"
+          >
+            <div class="progress-fill" [style.width.%]="s.progress"></div>
+          </div>
+        </div>
+        <span class="action muted">{{ s.progress }}%</span>
+      } @else if (current(); as f) {
+        <span
+          class="icon-box"
+          [class.previewable]="mode() === 'view'"
+          [attr.role]="mode() === 'view' ? 'button' : null"
+          [attr.tabindex]="mode() === 'view' ? 0 : null"
+          [attr.aria-label]="mode() === 'view' ? title() + ' 미리보기' : null"
+          (click)="mode() === 'view' && previewing.set(true)"
+          (keydown.enter)="mode() === 'view' && previewing.set(true)"
+        >
+          @if (mode() === 'view') {
+            <ng-container *ngTemplateOutlet="docIcon" />
+          } @else {
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path
+                d="M5 12.5l4.5 4.5L19 7.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          }
+        </span>
+        <div class="text">
+          <span class="name">{{ title() }}</span>
+          <span class="meta">{{ meta(f) }}</span>
+        </div>
+        @if (mode() === 'view') {
+          <button type="button" class="action link" (click)="previewing.set(true)">미리보기</button>
+          @if (previewing()) {
+            <app-pdf-preview
+              [fileId]="f.file_id"
+              [name]="f.original_name"
+              (closed)="previewing.set(false)"
+            />
+          }
+        } @else {
+          <button type="button" class="action link" [disabled]="!canPick()">변경</button>
+        }
+      } @else {
+        <span class="icon-box">
+          <ng-container *ngTemplateOutlet="docIcon" />
+        </span>
+        <div class="text">
+          <span class="name">{{ title() }}</span>
+          @if (description()) {
+            <span class="meta">{{ description() }}</span>
+          }
+        </div>
+        @if (disabled() && lockedLabel(); as label) {
+          <span class="action muted">{{ label }}</span>
+        } @else if (invalid()) {
+          <button type="button" class="action link missing" [disabled]="!canPick()">
+            파일을 올려주세요
+          </button>
+        } @else {
+          <button type="button" class="action link" [disabled]="!canPick()">파일 고르기</button>
+        }
+      }
+    }
+  </div>
+
+  <span class="sr-only" aria-live="polite">{{ announcement() }}</span>
+
+  @if (state(); as s) {
+    @if (s.kind === 'invalid') {
+      <div class="alert invalid" role="alert">
+        <strong>{{ s.title }}</strong>
+        <p>{{ s.message }}</p>
+        <button
+          appButton
+          variant="secondary"
+          type="button"
+          [disabled]="!canPick()"
+          (click)="picker.click()"
+        >
+          PDF 파일 다시 선택
+        </button>
+      </div>
+    } @else if (s.kind === 'failed') {
+      <div class="alert failed" role="alert">
+        <strong>파일을 업로드하지 못했어요</strong>
+        <p>연결 상태를 확인하고 다시 시도해주세요. 다른 첨부 파일은 유지됩니다.</p>
+        <button
+          appButton
+          variant="secondary"
+          type="button"
+          [disabled]="!canPick()"
+          (click)="retry()"
+        >
+          다시 업로드
+        </button>
+      </div>
+    }
+  }
+}
+
+<ng-template #docIcon>
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5 M9 13h6 M9 17h6"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+</ng-template>

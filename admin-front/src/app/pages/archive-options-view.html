@@ -1,0 +1,82 @@
+<app-page-header
+  eyebrow="월별 제출 내역"
+  heading="내려받기 옵션"
+  description="기본 설정으로 바로 내려받고, 필요한 경우에만 포함 자료를 바꾸세요."
+/>
+
+<p class="footnote">{{ criteriaSummary() }} · 검색·선택으로 정한 교육생만 포함해요.</p>
+
+@if (rows().length) {
+  <app-info-box [heading]="notice().heading">{{ notice().body }}</app-info-box>
+} @else {
+  <app-info-box tone="amber" [heading]="nothing" />
+}
+
+<div class="fields">
+  <app-field label="포함 자료">
+    <label class="choice fixed">
+      <input type="checkbox" checked disabled />
+      이번 달 최종 제출본
+    </label>
+  </app-field>
+  <app-field label="추가 자료">
+    <label class="choice">
+      <input
+        type="checkbox"
+        [checked]="options().baseDocs"
+        (change)="optionChange.emit({ key: 'baseDocs', on: $any($event.target).checked })"
+      />
+      기본 서류 3종
+    </label>
+    <label class="choice">
+      <input
+        type="checkbox"
+        [checked]="options().previous"
+        (change)="optionChange.emit({ key: 'previous', on: $any($event.target).checked })"
+      />
+      이전 제출본
+    </label>
+  </app-field>
+</div>
+
+<app-card heading="내려받을 폴더 미리보기">
+  <app-data-table>
+    <table>
+      <colgroup>
+        <col class="col-folder" />
+        <col />
+      </colgroup>
+      <thead>
+        <tr>
+          <th scope="col">폴더</th>
+          <th scope="col">자료</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of folders(); track row.folder) {
+          <tr>
+            <td>{{ row.folder }}</td>
+            <td>{{ row.files }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </app-data-table>
+</app-card>
+
+<p class="footnote">{{ footnote }}</p>
+<p class="footnote">
+  필터는 이번 달 최종 제출본에 적용해요. 기본 서류·이전 제출본은 위 추가 자료 옵션에 따라 포함해요.
+</p>
+
+<div class="actions">
+  <button appButton type="button" [disabled]="cannotStart()" (click)="download.emit()">
+    이 구성으로 내려받기
+  </button>
+  <button appButton variant="secondary" type="button" (click)="back.emit()">
+    자료함으로 돌아가기
+  </button>
+  @if (!canDownload()) {
+    <p class="note" role="note">{{ noDownload }}</p>
+  }
+</div>

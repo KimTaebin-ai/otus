@@ -1,0 +1,53 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.page-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.page-head p,
+.page-head h1 {
+  margin: 0;
+}
+
+.eyebrow {
+  font-size: var(--font-size-caption);
+  color: var(--color-teal);
+}
+
+h1 {
+  font-size: var(--font-size-page-title);
+  line-height: 1.3;
+  font-weight: var(--font-weight-bold);
+}
+
+.desc {
+  color: var(--color-muted);
+}
+
+.error {
+  margin: 0;
+  color: var(--color-red);
+}
+
+.lines {
+  margin: 0;
+  line-height: 1.7;
+  color: var(--color-muted);
+}
+
+.actions {
+  display: flex;
+  gap: calc(var(--space-1) * 1.5);
+}
+
+@media (max-width: 600px) {
+  .actions {
+    flex-direction: column;
+  }
+}

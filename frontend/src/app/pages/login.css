@@ -1,0 +1,334 @@
+:host {
+  display: flex;
+  min-height: 100vh;
+  background: var(--color-surface);
+}
+
+/* ---- Left: intro panel ---- */
+
+.intro {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  width: var(--width-login-panel);
+  padding: var(--space-5) calc(var(--space-1) * 6);
+  background: var(--color-nav);
+  color: var(--color-surface);
+}
+
+.logo {
+  margin: 0;
+  font-size: var(--font-size-logo);
+  font-weight: var(--font-weight-bold);
+  line-height: 1;
+}
+
+.intro-body {
+  margin: auto 0;
+}
+
+.headline {
+  margin: 0;
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.4;
+}
+
+.lede {
+  margin: var(--space-4) 0 0;
+  color: var(--color-nav-muted);
+  line-height: 1.7;
+}
+
+.features {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) * 7);
+  margin: calc(var(--space-1) * 7) 0 0;
+  padding: 0 0 0 var(--space-2);
+  list-style: none;
+}
+
+.features li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.features svg {
+  flex: none;
+  width: calc(var(--size-icon) * 1.2);
+  height: calc(var(--size-icon) * 1.2);
+  fill: none;
+  stroke: var(--color-nav-link);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.features span {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  font-size: var(--font-size-caption);
+  color: var(--color-nav-muted);
+}
+
+.features strong {
+  font-size: var(--font-size-body);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-surface);
+}
+
+.footer {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  color: var(--color-nav-muted);
+}
+
+/* ---- Right: login form ---- */
+
+.panel {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--width-login-form);
+}
+
+.eyebrow {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  color: var(--color-teal);
+}
+
+h1 {
+  margin: var(--space-4) 0 0;
+  font-size: var(--font-size-page-title);
+  font-weight: var(--font-weight-bold);
+  line-height: 1.5;
+}
+
+.desc {
+  margin: var(--space-4) 0 0;
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.login {
+  position: relative;
+  width: 100%;
+  height: var(--height-button-lg);
+  margin-top: var(--space-3);
+  /* the icon sits at the left edge; the same side padding on both sides keeps the label centered */
+  padding: 0 calc(var(--size-icon) + var(--space-2) * 2);
+}
+
+.login svg {
+  position: absolute;
+  top: 50%;
+  left: var(--space-2);
+  width: var(--size-icon);
+  height: var(--size-icon);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transform: translateY(-50%);
+}
+
+.login.email {
+  margin-top: var(--space-1);
+}
+
+.soon {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-caption);
+  color: var(--color-muted);
+}
+
+.error {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-caption);
+  color: var(--color-red);
+}
+
+/* demo login (demo environments only), same pattern as the admin login */
+.demo {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.demo label {
+  font-size: var(--font-size-caption);
+  color: var(--color-muted);
+}
+
+.demo-row {
+  display: flex;
+  gap: var(--space-1);
+}
+
+.demo input {
+  flex: 1;
+  box-sizing: border-box;
+  height: 48px;
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+}
+
+hr {
+  width: 100%;
+  margin: var(--space-3) 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.hint {
+  padding: var(--space-alert);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+}
+
+.hint strong {
+  font-weight: var(--font-weight-medium);
+}
+
+.hint p {
+  margin: var(--space-1) 0 0;
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+@media (max-width: 900px) {
+  :host {
+    flex-direction: column;
+  }
+
+  .intro {
+    width: auto;
+    padding: var(--space-4) var(--space-3);
+  }
+
+  .intro-body {
+    margin: var(--space-4) 0;
+  }
+
+  .headline {
+    font-size: var(--font-size-page-title);
+  }
+
+  .lede {
+    margin-top: var(--space-2);
+  }
+
+  .features {
+    gap: var(--space-3);
+    margin-top: var(--space-3);
+  }
+
+  .panel {
+    flex: none;
+    padding: var(--space-4) var(--space-3);
+  }
+}
+
+/* Phone: a native-app style sign-in on white. Logo on top, the form, and the three feature
+   lines as a footer block pinned to the bottom (the intro wrappers are flattened so every piece
+   can be ordered). */
+@media (max-width: 600px) {
+  :host {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: var(--color-nav);
+  }
+
+  .intro,
+  .intro-body {
+    display: contents;
+  }
+
+  .headline,
+  .lede,
+  .eyebrow,
+  hr {
+    display: none;
+  }
+
+  .logo {
+    order: 0;
+    padding: calc(var(--space-5) + env(safe-area-inset-top)) var(--space-3) 0;
+    background: var(--color-surface);
+    color: var(--color-teal);
+    font-size: 32px;
+  }
+
+  /* the form sits in the middle of the space between the logo and the footer */
+  .panel {
+    order: 1;
+    flex: 1;
+    align-items: center;
+    padding: var(--space-4) var(--space-3);
+    background: var(--color-surface);
+  }
+
+  .form {
+    max-width: none;
+  }
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    line-height: 1.4;
+  }
+
+  .desc {
+    margin-top: var(--space-1);
+    line-height: 1.6;
+  }
+
+  .login {
+    height: 54px;
+    margin-top: var(--space-4);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-lead);
+  }
+
+  .hint {
+    margin-top: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .hint p {
+    margin-top: calc(var(--space-1) / 2);
+    font-size: var(--font-size-caption);
+    line-height: 1.6;
+  }
+
+  /* flat white top (logo + form) and a dark footer under it */
+  .features {
+    order: 2;
+    margin: 0;
+    padding: var(--space-4) var(--space-3) var(--space-2);
+    gap: var(--space-2);
+  }
+
+  .footer {
+    order: 3;
+    padding: 0 var(--space-3) calc(var(--space-3) + env(safe-area-inset-bottom));
+    color: var(--color-nav-muted);
+    font-size: var(--font-size-micro);
+  }
+}

@@ -1,0 +1,71 @@
+<aside class="sidebar">
+  <a class="logo" routerLink="/home">
+    <span class="logo-name">{{ brand }}</span>
+    <span class="logo-tagline">배움에 더 집중하도록</span>
+  </a>
+
+  <nav aria-labelledby="menu-label">
+    <p id="menu-label" class="section-label">나의 지원금</p>
+    <ul>
+      @for (item of menu; track item.path) {
+        <li>
+          <a [routerLink]="item.path" routerLinkActive="active" ariaCurrentWhenActive="page">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              @switch (item.icon) {
+                @case ('home') {
+                  <path d="M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z" />
+                }
+                @case ('upload') {
+                  <path d="M12 15V4 M7 9l5-5 5 5 M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" />
+                }
+                @case ('clock') {
+                  <path d="M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18z M12 7v5l3 2" />
+                }
+                @case ('user') {
+                  <path
+                    d="M9 4a4 4 0 1 0 0 8a4 4 0 1 0 0-8z M2 21v-1a6 6 0 0 1 12 0v1 M16 4.5a4 4 0 0 1 0 7 M19 15a6 6 0 0 1 3 5v1"
+                  />
+                }
+              }
+            </svg>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+
+  <app-help-card class="help" [href]="helpUrl || null" />
+
+  @if (auth.me(); as me) {
+    <div class="user">
+      <span class="avatar" aria-hidden="true">{{ initial() }}</span>
+      <span class="user-text">
+        <span class="user-name">{{ me.display_name }}</span>
+        <span class="user-meta">{{ me.login }} · 카뎃</span>
+      </span>
+    </div>
+  }
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <p class="crumb">
+      나의 지원금
+      @if (crumb()) {
+        <span aria-hidden="true">/</span> {{ crumb() }}
+      }
+    </p>
+    <div class="topbar-right">
+      @if (targetMonth(); as month) {
+        <span class="month">{{ month }}</span>
+      }
+      <app-notifications />
+      <span class="avatar sm" aria-hidden="true">{{ initial() }}</span>
+      <button type="button" class="logout" (click)="logout()">로그아웃</button>
+    </div>
+  </header>
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

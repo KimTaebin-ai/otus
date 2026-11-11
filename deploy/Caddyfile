@@ -1,0 +1,116 @@
+{
+	admin off
+	# unprivileged ports, so the container needs no capabilities (the host maps 8443 → 8443)
+	http_port 8080
+	https_port 8443
+	auto_https disable_redirects
+	servers {
+		timeouts {
+			read_header 10s
+			# 20 MiB uploads on slow links
+			read_body 2m
+			write 2m
+			idle 2m
+		}
+	}
+}
+
+# SITE_ADDRESS=localhost uses Caddy's internal CA (trust it once with `caddy trust`
+# or accept the browser warning). Set it to the real domain in production to get
+# a public certificate.
+# Issue #9: the admin app is a separate build served on its own subdomain
+# (e.g. ADMIN_SITE_ADDRESS=admin.example.com), with the same CSP/security
+# headers and /api proxy as the student site. web.Containerfile copies its build
+# to /srv-admin. Locally, admin.localhost resolves to loopback in Chrome and Firefox
+# (https://admin.localhost:8443); the backend must list that origin in APP_ORIGINS.
+{$ADMIN_SITE_ADDRESS:admin.localhost} {
+	encode zstd gzip
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Cross-Origin-Opener-Policy "same-origin"
+		Cross-Origin-Resource-Policy "same-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		-Server
+	}
+	# same strict policy for downloaded documents as on the student site (see below)
+	@files path /api/files/* /api/admin/archive/*/exports/*/file
+	header @files {
+		defer
+		Content-Security-Policy "sandbox; default-src 'none'"
+		Referrer-Policy "no-referrer"
+	}
+	@app not path /api/files/* /api/admin/archive/*/exports/*/file
+	header @app {
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; frame-src blob:; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+	}
+	handle /api/* {
+		header Cache-Control "no-store"
+		request_body {
+			max_size 22MB
+		}
+		reverse_proxy 127.0.0.1:3000
+	}
+	handle {
+		# Build output is content-hashed (outputHashing: all), so it never changes under its name.
+		# index.html and icon.png are not hashed and keep revalidating.
+		@hashed path_regexp hashed ^/(media/.+|[A-Za-z]+-[A-Za-z0-9_-]{8}\.(js|css))$
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		root * /srv-admin
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+{$SITE_ADDRESS:localhost} {
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Cross-Origin-Opener-Policy "same-origin"
+		Cross-Origin-Resource-Policy "same-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=(), payment=(), usb=()"
+		-Server
+	}
+
+	# Downloaded documents get the strictest policy (the backend sends the same values).
+	# Caddy's header directive replaces upstream values, so the app-wide policy below
+	# must not apply to them.
+	@files path /api/files/* /api/admin/archive/*/exports/*/file
+	header @files {
+		# after the backend's response: exactly one value, ours
+		defer
+		Content-Security-Policy "sandbox; default-src 'none'"
+		Referrer-Policy "no-referrer"
+	}
+	@app not path /api/files/* /api/admin/archive/*/exports/*/file
+	header @app {
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# style-src needs 'unsafe-inline' because Angular injects component styles as <style> tags
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; object-src 'none'; frame-src blob:; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+	}
+
+	handle /api/* {
+		# responses carry personal data: never cache them
+		header Cache-Control "no-store"
+		# just above the backend's limit (20 MiB file + 64 KiB multipart overhead)
+		request_body {
+			max_size 22MB
+		}
+		reverse_proxy 127.0.0.1:3000
+	}
+
+	handle {
+		# Build output is content-hashed (outputHashing: all), so it never changes under its name.
+		# index.html and icon.png are not hashed and keep revalidating.
+		@hashed path_regexp hashed ^/(media/.+|[A-Za-z]+-[A-Za-z0-9_-]{8}\.(js|css))$
+		header @hashed Cache-Control "public, max-age=31536000, immutable"
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}

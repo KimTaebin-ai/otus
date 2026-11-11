@@ -1,0 +1,92 @@
+# End-to-end: build and start the whole stack as a verifier would (`make demo`), then run
+# the API smoke test and the browser suite in a temporary Chrome for Testing.
+name: e2e
+
+on:
+  push:
+    branches: [back-jaehylee, main, deploy, front-taebkim]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  chrome:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Tool versions
+        run: |
+          podman --version
+          bun --version
+          make --version | head -1
+
+      # ClamAV's mirrors rate-limit busy IP ranges, so reuse the signatures (weekly key)
+      - name: Signature cache key
+        id: week
+        run: echo "week=$(date -u +%G-%V)" >> "$GITHUB_OUTPUT"
+      - name: Restore ClamAV signatures
+        id: clamav-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/otus-clamav
+          key: clamav-${{ steps.week.outputs.week }}
+          restore-keys: clamav-
+      - name: Import cached signatures
+        run: |
+          if [ -f ~/.cache/otus-clamav/db.tar ]; then
+            podman volume create otus-clamav-db
+            podman volume import otus-clamav-db ~/.cache/otus-clamav/db.tar
+          else
+            echo "no cached signatures: the scanner downloads them (a few minutes)"
+          fi
+
+      - name: Start OTUS (make demo)
+        run: make demo
+
+      - name: Save signatures for the next run
+        if: steps.clamav-cache.outputs.cache-hit != 'true'
+        run: |
+          mkdir -p ~/.cache/otus-clamav
+          podman volume export otus-clamav-db --output ~/.cache/otus-clamav/db.tar
+
+      - name: API smoke test
+        run: make smoke
+
+      - name: Browser e2e (temporary Chrome for Testing)
+        env:
+          CHROME_NO_SANDBOX: "1"
+        run: make e2e-chrome
+
+      # After the browser suite: this step's many demo logins share the per-IP
+      # auth rate-limit bucket and must not starve the browser's fresh login.
+      - name: API coverage e2e
+        run: make e2e-api
+
+      - name: Collect logs
+        if: always()
+        run: |
+          mkdir -p e2e/artifacts
+          podman ps -a --pod > e2e/artifacts/containers.txt 2>&1 || true
+          podman pod logs otus > e2e/artifacts/pod.log 2>&1 || true
+
+      - name: Upload screenshots and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-chrome
+          path: e2e/artifacts
+          if-no-files-found: ignore
+
+      - name: Tear down
+        if: always()
+        run: make demo-clean

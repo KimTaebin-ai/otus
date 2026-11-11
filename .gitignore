@@ -1,0 +1,13 @@
+# Secrets and local config
+.env
+deploy/secrets.yaml
+deploy/.vagrant/
+
+# Backend
+backend/target/
+backend/data/
+
+.DS_Store
+
+# e2e screenshots
+e2e/artifacts/

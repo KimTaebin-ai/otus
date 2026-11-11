@@ -1,0 +1,89 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+p {
+  margin: 0;
+  line-height: 1.7;
+}
+input {
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-button);
+  padding: var(--space-1);
+  font: inherit;
+  color: var(--color-ink);
+  background: var(--color-surface);
+  min-height: var(--height-button);
+  min-width: 0;
+}
+input:focus-visible {
+  outline: 2px solid var(--color-teal);
+  outline-offset: 2px;
+}
+form {
+  display: grid;
+  gap: var(--space-2);
+}
+fieldset {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: var(--space-2);
+  padding: 0;
+  margin: 0;
+  border: 0;
+  min-width: 0;
+}
+label {
+  font-weight: var(--font-weight-medium);
+}
+fieldset label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+form button {
+  justify-self: start;
+}
+.muted {
+  color: var(--color-muted);
+}
+.error {
+  color: var(--color-red);
+}
+.success,
+a {
+  color: var(--color-teal);
+}
+.period-state {
+  white-space: nowrap;
+}
+.period-state.open {
+  color: var(--color-teal);
+  font-weight: var(--font-weight-bold);
+}
+.period-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+form {
+  margin-top: var(--space-2);
+}
+.history {
+  margin-top: var(--space-3);
+  border-top: var(--border-width) solid var(--color-border);
+  padding-top: var(--space-2);
+}
+summary {
+  cursor: pointer;
+  font-weight: var(--font-weight-medium);
+  margin-bottom: var(--space-2);
+}
+.history-row {
+  padding: var(--space-2) 0;
+  border-top: var(--border-width) solid var(--color-border);
+}

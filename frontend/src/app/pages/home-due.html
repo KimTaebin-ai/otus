@@ -1,0 +1,57 @@
+<!-- final U03-home-due.png -->
+<header class="page-head">
+  <p class="eyebrow">나의 지원금</p>
+  <h1>{{ me()?.display_name }}님, {{ monthNumber(cycle().target_month) }}월 서류를 낼 차례예요</h1>
+  <p class="meta">{{ monthNumber(cycle().target_month) }}월 · {{ me()?.login }}</p>
+</header>
+
+<div class="due">
+  @if (!me()?.employed) {
+    <div class="top">
+      <app-hours-hero [studyHours]="me()?.study_hours ?? null" />
+    </div>
+  }
+
+  <div class="stats">
+    <div class="stat">
+      <span class="stat-label">서류</span>
+      <strong>미제출</strong>
+      <span class="stat-sub">고용보험 PDF 1종</span>
+    </div>
+    <div class="stat">
+      <span class="stat-label">기본 마감</span>
+      <strong>{{ dotMonthDay(lastMoment(cycle().closes_at)) }}</strong>
+      <span class="stat-sub">{{ hourMinute(lastMoment(cycle().closes_at)) }} · KST</span>
+    </div>
+  </div>
+
+  <div class="notice">
+    <strong>{{ monthNumber(cycle().target_month) }}월 1일 이후 발급한 PDF를 준비해주세요</strong>
+    <p>
+      접수는 {{ monthDay(cycle().opens_at) }}부터 {{ monthDay(lastMoment(cycle().closes_at)) }}
+      {{ hourMinute(lastMoment(cycle().closes_at)) }}까지예요. 별도로 승인된 유예가 있으면 내
+      마감일에 표시돼요.
+    </p>
+  </div>
+
+  <div class="actions">
+    <button appButton type="button" routerLink="/submit">
+      {{ monthNumber(cycle().target_month) }}월 서류 제출하기
+    </button>
+    <button appButton variant="secondary" type="button" routerLink="/history">내 제출 이력</button>
+  </div>
+
+  <div class="pair">
+    <app-profile-card [employment]="employment()" [account]="account()" />
+    <app-card heading="운영팀 안내">
+      <p class="lines">
+        {{ dotMonthDay(cycle().opens_at) }} · 서류 제출 안내<br />
+        이메일과 서비스 내 알림에서 확인해요.
+      </p>
+    </app-card>
+  </div>
+
+  <p class="footnote">
+    서류 승인은 서류 검토 결과예요. 수령 대상은 시간 요건과 서류 승인을 함께 보고 운영팀이 확정해요.
+  </p>
+</div>

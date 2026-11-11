@@ -1,0 +1,75 @@
+<header class="page-head">
+  <p class="eyebrow">나의 지원금</p>
+  <h1>내 정보와 변경 이력</h1>
+  <p class="desc">원본 증빙을 함께 제출하고, 운영팀의 확인 결과를 받아보세요.</p>
+</header>
+
+<div class="pair">
+  <app-card heading="지급 계좌">
+    @if (failed()) {
+      <p class="error" role="alert">계좌 정보를 불러오지 못했어요.</p>
+    } @else if (loaded()) {
+      @if (current(); as account) {
+        <p class="lines">
+          {{ account.bank }} · {{ account.account_number_masked }}<br />
+          예금주 {{ me()?.display_name }}<br />
+          @if (account.bankbook; as book) {
+            {{ book.original_name }}
+          }
+        </p>
+      } @else {
+        <p class="lines">아직 등록된 계좌가 없어요.</p>
+      }
+      <div>
+        <button appButton variant="secondary" size="sm" type="button" routerLink="/settings">
+          계좌사본 교체
+        </button>
+      </div>
+    }
+  </app-card>
+  <app-card heading="이름·본인 정보">
+    <p class="lines">
+      현재 이름 · {{ me()?.display_name }}<br />
+      인트라 ID · {{ me()?.login }}<br />
+      변경 승인 전에는 기존 정보가 유지돼요.
+    </p>
+  </app-card>
+</div>
+
+<section class="employment" aria-labelledby="employment-label">
+  <h2 id="employment-label">취업 상태</h2>
+  <app-employment-choice />
+</section>
+
+<app-info-box heading="취업 상태는 선택하면 바로 저장돼요">
+  취업 중일 때는 미제출 안내에서 제외돼요. 수령 대상 여부는 운영팀의 확정 결과로 따로 확인해요.
+</app-info-box>
+
+<app-card heading="최근 변경">
+  @if (changes().length) {
+    <table>
+      <thead>
+        <tr>
+          <th scope="col">일시</th>
+          <th scope="col">항목</th>
+          <th scope="col">상태</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (change of changes(); track change.at + change.item) {
+          <tr>
+            <td>
+              <time [attr.datetime]="change.at">
+                {{ dotMonthDay(change.at) }} {{ hourMinute(change.at) }}
+              </time>
+            </td>
+            <td>{{ change.item }}</td>
+            <td>{{ change.status }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  } @else {
+    <p class="lines">아직 변경한 내용이 없어요.</p>
+  }
+</app-card>

@@ -1,0 +1,61 @@
+<app-page-header eyebrow="사용자 관리" [heading]="title" [description]="description" />
+
+<div class="filters">
+  <app-field label="교육생 검색">
+    <input
+      type="search"
+      class="text"
+      placeholder="한글 이름 또는 인트라 ID"
+      aria-label="교육생 검색"
+      [value]="query()"
+      (input)="queryChange.emit($any($event.target).value)"
+    />
+  </app-field>
+</div>
+
+<app-card [heading]="heading()">
+  <div
+    #scroller
+    class="scroll"
+    tabindex="0"
+    role="region"
+    aria-label="교육생 목록"
+    (scroll)="onScroll(scroller)"
+  >
+    <app-data-table>
+      <table>
+        <colgroup>
+          <col class="col-name" />
+          <col class="col-employment" />
+          <col />
+        </colgroup>
+        <thead>
+          <tr>
+            <th scope="col">교육생</th>
+            <th scope="col">취업 상태</th>
+            <th scope="col">최초 서류</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of shown(); track row.id) {
+            <tr>
+              <td>
+                <a class="name" [routerLink]="['/users', row.id]">{{ row.name }}</a>
+                <span class="muted login">{{ row.login }}</span>
+              </td>
+              <td>{{ row.employment }}</td>
+              <td>{{ row.initial }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </app-data-table>
+    @if (error(); as message) {
+      <p class="empty" role="alert">{{ message }}</p>
+    } @else if (loading()) {
+      <app-spinner [size]="rows().length ? 'inline' : 'card'" />
+    } @else if (shown().length === 0) {
+      <p class="empty">{{ emptyText() }}</p>
+    }
+  </div>
+</app-card>

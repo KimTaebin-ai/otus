@@ -1,0 +1,34 @@
+<header class="page-head">
+  <p class="eyebrow">나의 지원금</p>
+  <h1>계좌 변경을 요청했어요</h1>
+  <p class="desc">{{ me()?.display_name }} · {{ me()?.login }} · 승인 전 기존 지급 정보 유지</p>
+</header>
+
+@if (failed()) {
+  <p class="error" role="alert">요청 내용을 불러오지 못했어요.</p>
+} @else if (pending(); as request) {
+  <app-info-box heading="새 통장사본 검토 대기">
+    @if (current(); as account) {
+      기존 지급 계좌: {{ account.bank }} {{ account.account_number_masked }}. 승인되면 요청한 계좌로
+      갱신돼요.
+    } @else {
+      아직 승인된 지급 계좌가 없어요. 승인되면 요청한 계좌가 지급 계좌가 돼요.
+    }
+  </app-info-box>
+
+  <app-card heading="변경 요청 내용">
+    <p class="lines">
+      {{ request.bank }} {{ request.account_number_masked }} / 예금주 {{ me()?.display_name }}<br />
+      @if (request.bankbook; as book) {
+        {{ book.original_name }}<br />
+      }
+      {{ dotMonthDay(request.requested_at) }} {{ hourMinute(request.requested_at) }} 제출 · 회계
+      담당자 확인 대기
+    </p>
+  </app-card>
+
+  <div class="actions">
+    <button appButton type="button" routerLink="/settings/history">변경 요청 이력</button>
+    <button appButton variant="secondary" type="button" routerLink="/settings">내 정보로</button>
+  </div>
+}

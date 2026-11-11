@@ -1,0 +1,193 @@
+<app-page-header eyebrow="월별 제출 내역" [heading]="title()" [description]="description()">
+</app-page-header>
+
+<app-info-box [heading]="notice().heading">{{ notice().body }}</app-info-box>
+
+<div class="filters">
+  <app-field label="교육생 검색">
+    <input
+      type="search"
+      class="text"
+      placeholder="이름 또는 인트라 ID"
+      aria-label="교육생 검색"
+      [value]="query()"
+      [disabled]="busy()"
+      (input)="queryChange.emit($any($event.target).value)"
+    />
+  </app-field>
+  <app-field label="보기">
+    <label class="choice">
+      <input
+        type="radio"
+        name="archive-filter"
+        [checked]="filter() === 'all'"
+        [disabled]="busy()"
+        (change)="filterChange.emit('all')"
+      />
+      전체
+    </label>
+    <label class="choice">
+      <input
+        type="radio"
+        name="archive-filter"
+        [checked]="filter() === 'selected'"
+        [disabled]="busy()"
+        (change)="filterChange.emit('selected')"
+      />
+      선택한 사람
+    </label>
+  </app-field>
+</div>
+
+<details class="advanced-filters">
+  <summary>
+    상세 조건
+    <span class="criteria-count">{{ criteriaCount() ? criteriaCount() + '개 선택' : '전체' }}</span>
+  </summary>
+  <div class="advanced-content">
+    <p class="filter-note">
+      여러 조건을 선택할 수 있어요. 검토 상태나 제출 종류를 선택하지 않으면 해당 조건 전체를
+      조회해요.
+    </p>
+    <fieldset [disabled]="busy()">
+      <legend>검토 상태</legend>
+      <div class="choices">
+        @for (status of statuses; track status) {
+          <label class="choice">
+            <input
+              type="checkbox"
+              name="archive-status"
+              [value]="status"
+              [checked]="criteria().status.includes(status)"
+              (change)="toggleStatus(status, $any($event.target).checked)"
+            />
+            {{ statusLabels[status] }}
+          </label>
+        }
+      </div>
+    </fieldset>
+    <fieldset [disabled]="busy()">
+      <legend>최근 제출 종류</legend>
+      <div class="choices">
+        @for (kind of kinds; track kind) {
+          <label class="choice">
+            <input
+              type="checkbox"
+              name="archive-kind"
+              [value]="kind"
+              [checked]="criteria().kind.includes(kind)"
+              (change)="toggleKind(kind, $any($event.target).checked)"
+            />
+            {{ kindLabels[kind] }}
+          </label>
+        }
+      </div>
+    </fieldset>
+  </div>
+</details>
+@if (criteriaCount()) {
+  <p class="filter-note">{{ criteriaSummary() }}</p>
+}
+
+<div class="filter-summary">
+  <p class="muted" role="status">
+    조건에 맞는 교육생 {{ shown().length }}명 · 다운로드 대상 {{ chosen().length }}명
+  </p>
+  <button
+    appButton
+    variant="secondary"
+    type="button"
+    [disabled]="busy() || !hasFilters()"
+    (click)="resetFilters.emit()"
+  >
+    필터 초기화
+  </button>
+</div>
+<p class="filter-note">
+  현재 조건에 맞고 선택한 교육생의 자료만 내려받아요. 상태·종류는 각 제출의 가장 최근 검토 상태와
+  제출 종류로 판단하며, 보완 제출에는 유지된 원본도 포함해요.
+</p>
+
+<app-card [heading]="heading()">
+  <app-data-table>
+    <table>
+      <colgroup>
+        <col class="col-select" />
+        <col class="col-student" />
+        <col class="col-kind" />
+        <col class="col-files" />
+        <col class="col-time" />
+        <col />
+      </colgroup>
+      <thead>
+        <tr>
+          <th scope="col">
+            <input
+              type="checkbox"
+              aria-label="보이는 교육생 모두 선택"
+              [checked]="allState() === 'all'"
+              [indeterminate]="allState() === 'some'"
+              [disabled]="shown().length === 0 || busy()"
+              (change)="onToggleShown($any($event.target).checked)"
+            />
+          </th>
+          <th scope="col">교육생</th>
+          <th scope="col">제출 종류</th>
+          <th scope="col">제출 자료</th>
+          <th scope="col">접수 시각</th>
+          <th scope="col">검토 상태</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of shown(); track row.userId) {
+          <tr>
+            <td>
+              <input
+                type="checkbox"
+                [attr.aria-label]="row.name + ' 선택'"
+                [checked]="selected().has(row.userId)"
+                [disabled]="busy()"
+                (change)="toggle.emit(row.userId)"
+              />
+            </td>
+            <td>
+              <a class="name" [routerLink]="['/users', row.userId]">{{ row.name }}</a>
+              <span class="muted"> · {{ row.login }}</span>
+            </td>
+            <td>{{ kindSummary(row) }}</td>
+            <td>{{ filesSummary(row.files) }}</td>
+            <td>{{ receivedAt(row.submittedAt) }}</td>
+            <td><app-status-badge [status]="row.status" /></td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </app-data-table>
+  @if (shown().length === 0) {
+    <p class="empty">{{ empty() }}</p>
+  }
+</app-card>
+
+<div class="actions">
+  <button appButton type="button" [disabled]="cannotStart()" (click)="download.emit()">
+    {{ downloadText() }}
+  </button>
+  <button
+    appButton
+    variant="secondary"
+    type="button"
+    [disabled]="!canDownload() || busy()"
+    (click)="options.emit()"
+  >
+    내려받기 옵션
+  </button>
+  @if (!canDownload()) {
+    <p class="note" role="note">{{ noDownload }}</p>
+  }
+</div>
+
+<app-card [heading]="'이름별 폴더까지 자동으로 정리해 드려요'">
+  @for (line of note(); track line) {
+    <p class="line">{{ line }}</p>
+  }
+</app-card>

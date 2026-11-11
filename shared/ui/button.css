@@ -1,0 +1,38 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--height-button);
+  padding: 0 var(--space-button-x);
+  border: var(--border-width) solid var(--color-teal);
+  border-radius: var(--radius-button);
+  background: var(--color-teal);
+  color: var(--color-surface);
+  font: inherit;
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-medium);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+:host(.sm) {
+  height: var(--height-button-sm);
+}
+
+:host(.secondary) {
+  border-color: var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+
+:host(:disabled) {
+  border-color: var(--color-border);
+  background: var(--color-border);
+  color: var(--color-muted);
+  cursor: not-allowed;
+}
+
+:host(:focus-visible) {
+  outline: calc(var(--border-width) * 2) solid var(--color-teal);
+  outline-offset: calc(var(--border-width) * 2);
+}

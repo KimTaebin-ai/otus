@@ -1,0 +1,144 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.page-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.page-head p,
+.page-head h1 {
+  margin: 0;
+}
+
+.eyebrow {
+  font-size: var(--font-size-caption);
+  color: var(--color-teal);
+}
+
+h1 {
+  font-size: var(--font-size-page-title);
+  line-height: 1.3;
+  font-weight: var(--font-weight-bold);
+}
+
+.desc {
+  color: var(--color-muted);
+}
+
+.columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--width-aside);
+  gap: var(--space-3);
+  align-items: start;
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  height: var(--height-badge);
+  padding: 0 var(--space-badge-x);
+  border-radius: var(--radius-pill);
+  background: var(--color-mint);
+  color: var(--color-teal);
+  font-size: var(--font-size-caption);
+  white-space: nowrap;
+}
+
+.empty {
+  margin: 0;
+  color: var(--color-muted);
+}
+
+/* ---- right column ---- */
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-alert);
+  margin: 0;
+}
+
+.rows div {
+  display: flex;
+  justify-content: space-between;
+}
+
+.rows dt {
+  color: var(--color-muted);
+}
+
+.rows dd {
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+}
+
+hr {
+  width: 100%;
+  margin: 0;
+  border: 0;
+  border-top: var(--border-width) solid var(--color-border);
+}
+
+.note {
+  margin: 0;
+  color: var(--color-muted);
+  line-height: 1.7;
+}
+
+.mint-title {
+  margin: 0;
+  font-size: var(--font-size-card-title);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-teal);
+}
+
+.mint-body {
+  margin: 0;
+  color: var(--color-teal);
+  line-height: 1.7;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--font-size-caption);
+  line-height: 20px;
+  color: var(--color-muted);
+}
+
+.timeline li {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline li.latest {
+  color: var(--color-teal);
+}
+
+@media (max-width: 1100px) {
+  .columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .rows div {
+    flex-wrap: wrap;
+    gap: var(--space-1);
+  }
+}

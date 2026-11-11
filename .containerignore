@@ -1,0 +1,9 @@
+**/node_modules
+**/target
+**/dist
+**/.env
+**/data
+**/.angular
+.git
+deploy/secrets.yaml
+deploy/.vagrant

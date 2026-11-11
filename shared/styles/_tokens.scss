@@ -1,0 +1,157 @@
+// OTUS design tokens. Rules and usage: docs/design/README.md
+// Source of truth: docs/design/final/*.png (1440px wide, 1x). Values are sampled from their
+// pixels; final matched the earlier wireframe palette exactly, so only sizes changed
+// (2026-10-17). 【확인 필요】 marks estimates.
+
+:root {
+  // ---- Palette (final, same as wireframe/Foundations.png) ----
+  --color-nav: #152b2c;
+  --color-teal: #087f73; // primary action, active nav text, links
+  --color-mint: #e5f4ef;
+  --color-bg: #faf9f6;
+  --color-amber-bg: #fff3df;
+  --color-red-bg: #fff0eb;
+
+  // ---- Neutrals ----
+  --color-surface: #ffffff; // page and card background
+  --color-ink: #192526; // titles, body text
+  --color-muted: #60736f; // descriptions, meta, section labels, disabled text
+  --color-border: #dfe7e5; // card/row/secondary button border, dividers, disabled button bg
+
+  // ---- Status text colors (final "검토 중" badges; red/amber from wireframe Validation states) ----
+  --color-blue-bg: #edf3fc;
+  --color-blue: #3b66a3;
+  --color-red: #b74c3a;
+  --color-amber: #98641b;
+
+  // ---- On --color-nav (U01 left panel; also wireframe Admin.png) ----
+  --color-nav-muted: #9bb3b1; // body and footer text
+  --color-nav-link: #d8f3a5; // feature icons
+
+  // ---- Admin sidebar (admin-front; A00/A18 images, same colors as the tokens above) ----
+  --admin-nav-fg: var(--color-nav-muted); // menu text and icons, section label
+  --admin-nav-bg-active: var(--color-teal); // active menu: dark teal (the student app uses mint)
+  --admin-nav-fg-active: var(--color-surface);
+  --overlay: rgba(10, 32, 33, 0.4); // modal backdrop (measured from A07-notice-sent)
+
+  // ---- Status badges (api.md status → badge) ----
+  // pending_review/resubmitted = blue, approved = mint, revision_requested = red, draft = gray.
+  // Only "검토 중" (pending_review) is in final; the rest agreed 2026-10-16.
+  --badge-approved-bg: var(--color-mint);
+  --badge-approved-fg: var(--color-teal);
+  --badge-pending-review-bg: var(--color-blue-bg);
+  --badge-pending-review-fg: var(--color-blue);
+  --badge-resubmitted-bg: var(--color-blue-bg);
+  --badge-resubmitted-fg: var(--color-blue);
+  --badge-revision-requested-bg: var(--color-red-bg);
+  --badge-revision-requested-fg: var(--color-red);
+  --badge-draft-bg: var(--color-bg);
+  --badge-draft-fg: var(--color-muted);
+  // "미제출" (amber) appears in Foundations.png but maps to no api.md status.
+  --badge-missing-bg: var(--color-amber-bg);
+  --badge-missing-fg: var(--color-amber);
+
+  // ---- 시간 요건 (time requirement) badges and bar ----
+  // Not in final (built straight from tokens, day 2). 달성(예상) is an outlined mint so it never
+  // looks like the filled 충족 / 수령 대상 badges; only 수령 대상 (staff's final call) is solid teal.
+  --badge-hours-progress-bg: var(--color-bg);
+  --badge-hours-progress-fg: var(--color-muted);
+  --badge-hours-projected-bg: var(--color-surface);
+  --badge-hours-projected-fg: var(--color-teal);
+  --badge-hours-projected-border: var(--color-teal);
+  --badge-hours-waiting-bg: var(--color-blue-bg);
+  --badge-hours-waiting-fg: var(--color-blue);
+  --badge-hours-met-bg: var(--color-mint);
+  --badge-hours-met-fg: var(--color-teal);
+  --badge-hours-not-met-bg: var(--color-amber-bg);
+  --badge-hours-not-met-fg: var(--color-amber);
+  --badge-hours-on-hold-bg: var(--color-blue-bg);
+  --badge-hours-on-hold-fg: var(--color-blue);
+  --badge-hours-eligible-bg: var(--color-teal);
+  --badge-hours-eligible-fg: var(--color-surface);
+  --badge-hours-ineligible-bg: var(--color-bg);
+  --badge-hours-ineligible-fg: var(--color-muted);
+  --hours-bar-track: var(--color-border);
+  --hours-bar-fill-low: var(--color-amber); // short of 40시간
+  --hours-bar-fill: var(--color-teal); // 40시간 reached
+  --hours-bar-fill-top: #05564e; // 80시간 reached
+  --hours-bar-mark: var(--color-muted); // 40·80시간 marks
+
+  // ---- Typography (Noto Sans KR) ----
+  --font-family: 'Noto Sans KR Variable', 'Noto Sans KR', sans-serif;
+  // Sizes are back-calculated from glyph heights. 【확인 필요】 for all of them.
+  --font-size-logo: 42px; // big "42" (sidebar, U01)
+  --font-size-display: 40px; // U01 left headline
+  --font-size-page-title: 28px; // page h1, U01 welcome title
+  --font-size-logo-sm: 20px; // teal "42" in the U02 top bar
+  --font-size-feature-title: 20px; // U03 hero card title
+  --font-size-lead: 16px; // U03 hero body, FAQ answers, "접수 완료"
+  --font-size-card-title: 16px; // card titles
+  --font-size-alert-title: 14px; // info box titles
+  --font-size-label: 14px; // nav items, buttons, row titles, text links
+  --font-size-body: 14px; // descriptions, body
+  --font-size-caption: 12px; // badges, breadcrumb, section labels, footnotes, info box body
+  --font-size-micro: 11px; // eyebrows ("나의 지원금"), "09.21 제출"
+  --font-weight-regular: 400;
+  --font-weight-medium: 500; // nav items, buttons 【확인 필요】
+  --font-weight-bold: 700; // titles
+
+  // ---- Spacing (8px scale) ----
+  --space-1: 8px;
+  --space-2: 16px; // file row side padding, gap between rows
+  --space-3: 24px; // card padding, gap between cards/columns
+  --space-4: 32px;
+  --space-5: 40px; // main content padding on sidebar screens
+  --space-alert: 20px; // alert padding and gap; not a multiple of 8 【확인 필요】
+  --space-button-x: 20px; // button side padding
+  --space-badge-x: 12px; // badge side padding
+
+  // ---- Sizes (measured) ----
+  --height-button: 44px;
+  --height-button-sm: 42px; // secondary buttons with "→"
+  --height-button-lg: 46px; // U01 login button
+  --height-nav-item: 48px;
+  --height-badge: 28px; // badges and count pills
+  --height-file-row: 94px; // document row (U02)
+  --height-topbar: 76px; // sidebar screens
+  --height-topbar-onboarding: 88px; // U02
+  --width-sidebar: 228px; // including its 1px right border
+  --width-aside: 372px; // right column (U02, U03)
+  --width-onboarding: 1132px; // U02 content width
+  --width-login-panel: 560px; // U01 left panel
+  --width-login-form: 440px; // U01 right column
+  --width-dialog: 640px; // modal panel (admin A07)
+  --size-avatar: 36px; // sidebar user row
+  --size-avatar-sm: 32px; // top bar
+  --size-icon-box: 44px; // document icon box 【확인 필요】
+  --size-icon: 20px; // icons in the icon box, nav and top bar 【확인 필요】
+  --height-hours-bar: 8px; // 시간 요건 bar; not in final
+  --height-progress: 4px; // upload progress bar; no image shows one (agreed 2026-10-16) 【확인 필요】
+  --border-width: 1px; // card/row/button borders
+
+  // ---- Radius (measured from anti-aliased corners; 【확인 필요】) ----
+  --radius-button: 6px; // buttons
+  --radius-sm: 8px; // nav item, icon box
+  --radius-md: 12px; // file rows, info boxes, help cards, U02 bottom bar
+  --radius-lg: 16px; // cards, U03 hero
+  --radius-pill: 999px; // badges
+
+  // ---- Shadow ----
+  // No image shows a shadow. White cards have a --color-border border; mint surfaces and
+  // the U02 bottom bar have none.
+  --shadow-none: none;
+}
+
+// ---- Responsive ----
+// Breakpoints are literals in each component's @media (CSS custom properties don't work there):
+// 1100px (right column drops below), 900px (sidebar becomes a top strip), 720px / 600px (phone).
+// Type scale shrinks on phones; spacing and layout are handled per component.
+@media (max-width: 600px) {
+  :root {
+    --font-size-page-title: 24px;
+    --font-size-display: 30px;
+    --font-size-feature-title: 18px;
+    --font-size-logo: 34px;
+    --space-5: 24px;
+  }
+}

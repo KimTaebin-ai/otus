@@ -1,0 +1,284 @@
+<h1>알림 보내기</h1>
+<p class="lead">
+  알림을 쓰고, 보낼 채널과 대상을 고른 뒤 한 번에 발송해요. 모두 이 화면에서 끝나요.
+</p>
+
+@if (stage() !== 'sent') {
+  <div class="page-grid">
+    <app-card heading="알림 작성">
+      <div class="compose">
+        <label for="notice-title">알림 제목</label>
+        <input
+          id="notice-title"
+          name="title"
+          type="text"
+          required
+          maxlength="120"
+          [disabled]="locked()"
+          [ngModel]="title()"
+          (ngModelChange)="title.set($event)"
+          placeholder="알림 제목을 입력해주세요"
+        />
+        <label for="notice-body">알림 내용</label>
+        <textarea
+          id="notice-body"
+          name="body"
+          required
+          maxlength="5000"
+          rows="10"
+          [disabled]="locked()"
+          [ngModel]="content()"
+          (ngModelChange)="content.set($event)"
+          placeholder="학생에게 전달할 내용을 입력해주세요"
+        ></textarea>
+        <p class="hint">제목은 최대 120자, 내용은 최대 5,000자까지 입력할 수 있어요.</p>
+      </div>
+    </app-card>
+
+    <div class="selection">
+      <app-card heading="발송 채널">
+        <fieldset [disabled]="locked()">
+          <legend class="sr-only">발송 채널 선택</legend>
+          <label class="check"
+            ><input
+              id="channel-service"
+              type="checkbox"
+              [checked]="serviceChecked()"
+              (change)="toggleChannel('service', $event)"
+            />앱 내부 알림</label
+          >
+          <label class="check"
+            ><input
+              id="channel-email"
+              type="checkbox"
+              [checked]="emailChecked()"
+              [disabled]="emailAvailable() === false"
+              (change)="toggleChannel('email', $event)"
+            />이메일</label
+          >
+        </fieldset>
+        <p class="hint">두 채널을 함께 선택할 수 있어요.</p>
+        @if (emailAvailable() === false) {
+          <p role="status" class="hint">
+            이메일 발송이 설정되지 않았어요. 앱 내부 알림은 보낼 수 있어요.
+          </p>
+        }
+      </app-card>
+      <app-card heading="발송 대상">
+        @if (preview(); as p) {
+          <p class="hint">{{ p.month }} 기준</p>
+        }
+        <fieldset [disabled]="locked()">
+          <legend class="sr-only">발송 대상 조건 선택</legend>
+          @for (group of groups; track group.value) {
+            <label class="check"
+              ><input
+                type="checkbox"
+                [id]="'audience-' + group.value"
+                [checked]="selectedGroups().includes(group.value)"
+                (change)="toggleGroup(group.value, $event)"
+              />{{ group.label }}</label
+            >
+          }
+        </fieldset>
+        <p class="hint">
+          여러 조건을 선택하면 해당 학생을 모두 포함하고, 중복된 학생에게는 한 번만 발송해요.
+        </p>
+        <p class="hint">
+          시간 구간은 하루 최대 12시간을 반영한 최근 월별 집계 기준이에요. 40~80시간 구간은 40시간
+          이상 80시간 미만이에요.
+        </p>
+        <p class="hint">
+          미제출·시간 구간은 최초 서류 등록을 마친 미취업 학생 기준이에요. 취업자는 서류 제출·학습
+          시간과 관계없이 현재 취업 중인 학생을 포함해요. 전체 학생은 최초 등록 전·취업 중인 학생도
+          포함해요.
+        </p>
+      </app-card>
+    </div>
+  </div>
+
+  <app-card
+    [heading]="
+      loading() ? '발송 대상 확인 중' : '발송 대상 ' + (preview()?.targets?.length ?? 0) + '명'
+    "
+  >
+    <button
+      cardAction
+      appButton
+      variant="secondary"
+      type="button"
+      [disabled]="loading() || !selectedGroups().length"
+      (click)="load()"
+    >
+      명단 새로고침
+    </button>
+    <div aria-live="polite">
+      @if (loading()) {
+        <p role="status">선택한 조건에 맞는 학생을 확인하고 있어요.</p>
+      } @else if (loadError(); as message) {
+        <p role="alert">{{ message }}</p>
+      } @else if (!selectedGroups().length) {
+        <p class="hint">발송 대상을 체크하면 명단이 표시돼요.</p>
+      } @else if (preview()?.targets?.length === 0) {
+        <p class="hint">선택한 조건에 해당하는 학생이 없어요.</p>
+      }
+    </div>
+    @if (preview(); as p) {
+      @if (p.targets.length) {
+        <div class="roster" tabindex="0" role="region" aria-label="발송 대상 명단">
+          <app-data-table>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">이름</th>
+                  <th scope="col">42 아이디</th>
+                  <th scope="col">취업 상태</th>
+                  <th scope="col">서류 제출</th>
+                  <th scope="col">학습 시간</th>
+                  @if (emailChecked()) {
+                    <th scope="col">이메일</th>
+                  }
+                </tr>
+              </thead>
+              <tbody>
+                @for (target of p.targets; track target.user_id) {
+                  <tr>
+                    <td>{{ target.name }}</td>
+                    <td>{{ target.login }}</td>
+                    <td>{{ target.employed ? '취업 중' : '미취업' }}</td>
+                    <td>
+                      {{
+                        target.status === 'submitted'
+                          ? '제출 완료'
+                          : target.status === 'draft'
+                            ? '임시 저장'
+                            : '미제출'
+                      }}
+                    </td>
+                    <td>
+                      {{
+                        target.study_hours === null
+                          ? '확인 불가'
+                          : target.study_hours === 0
+                            ? '40시간 미만'
+                            : target.study_hours === 40
+                              ? '40~80시간 구간'
+                              : '80시간 이상'
+                      }}
+                      @if (target.as_of) {
+                        <small>{{ dateTime(target.as_of) }} 집계</small>
+                      }
+                    </td>
+                    @if (emailChecked()) {
+                      <td>{{ target.email ?? '주소 확인 불가' }}</td>
+                    }
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </app-data-table>
+        </div>
+      }
+      @if (!selectedGroups().includes('all')) {
+        <p class="hint">
+          @if (!selectedGroups().includes('employed')) {
+            취업 중 {{ p.employed_excluded }}명 제외 ·
+          }
+          학습 시간 확인 불가 {{ p.hours_unknown }}명은 시간 구간으로 선택되지 않아요.
+        </p>
+      }
+    }
+    @if (actionError(); as message) {
+      <p role="alert">{{ message }}</p>
+    }
+    @if (!serviceChecked() && !emailChecked()) {
+      <p class="hint" role="status">발송 채널을 하나 이상 선택해주세요.</p>
+    }
+  </app-card>
+
+  <section class="send-bar" aria-label="발송">
+    <p class="send-summary" aria-live="polite">
+      <strong>{{ preview()?.targets?.length ?? 0 }}명</strong>
+      <span>{{ channelLabel() }}</span>
+      <span>{{ groupLabels() || '대상을 선택해주세요' }}</span>
+    </p>
+    @if (stage() === 'compose') {
+      <button appButton type="button" [disabled]="!canReview()" (click)="next()">발송하기</button>
+    }
+  </section>
+  @if (stage() === 'compose' && !canReview()) {
+    <p class="hint" role="status">{{ missing() }}</p>
+  }
+
+  @if (stage() === 'confirm') {
+    <section class="confirmation" aria-label="최종 발송 확인">
+      <app-card>
+        <h2 #confirmHeading class="confirm-heading" tabindex="-1">
+          보내기 전에 한 번 더 확인해주세요
+        </h2>
+        <dl class="summary">
+          <div>
+            <dt>기준 월</dt>
+            <dd>{{ preview()?.month }}</dd>
+          </div>
+          <div>
+            <dt>발송 채널</dt>
+            <dd>{{ channelLabel() }}</dd>
+          </div>
+          <div>
+            <dt>대상 조건</dt>
+            <dd>{{ groupLabels() }}</dd>
+          </div>
+          <div>
+            <dt>발송 인원</dt>
+            <dd>
+              <strong>{{ preview()?.targets?.length }}명</strong>
+            </dd>
+          </div>
+        </dl>
+        <h3 class="message-title">{{ title() }}</h3>
+        <p class="message-body">{{ content() }}</p>
+        <p class="hint">
+          ‘최종 발송하기’를 누르면 바로 발송돼요. 수정하려면 ‘수정하기’로 돌아갈 수 있어요.
+        </p>
+        @if (actionError(); as message) {
+          <p role="alert">{{ message }}</p>
+        }
+        <div class="confirm-actions">
+          <button
+            appButton
+            variant="secondary"
+            type="button"
+            [disabled]="busy() || uncertain()"
+            (click)="previous()"
+          >
+            수정하기
+          </button>
+          <button appButton type="button" [disabled]="busy()" (click)="send()">
+            {{
+              busy() ? '발송 결과 확인 중…' : uncertain() ? '발송 결과 다시 확인' : '최종 발송하기'
+            }}
+          </button>
+        </div>
+      </app-card>
+    </section>
+  }
+}
+@if (stage() === 'sent' && result(); as sent) {
+  <app-notice-sent
+    [result]="sent"
+    [delivery]="delivery()"
+    [emailAvailable]="emailAvailable()"
+    [busy]="busy()"
+    [error]="actionError()"
+    [statusError]="statusError()"
+    [retryConfirm]="retryConfirm()"
+    [retryUncertain]="retryUncertain()"
+    [retryClosed]="retryClosed()"
+    (reviewRetry)="retryConfirm.set(true)"
+    (cancelRetry)="retryConfirm.set(false)"
+    (retry)="retryEmail()"
+    (refreshStatus)="refreshStatus()"
+    (done)="done()"
+  />
+}

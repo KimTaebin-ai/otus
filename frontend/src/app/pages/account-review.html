@@ -1,0 +1,76 @@
+<header class="page-head">
+  <p class="eyebrow">나의 지원금</p>
+  <h1>계좌 변경을 검토 요청해주세요</h1>
+  <p class="desc">승인 전까지 기존 지급 계좌가 유지돼요.</p>
+</header>
+
+<dl class="fields">
+  <div>
+    <dt>은행</dt>
+    <dd>{{ bank }}</dd>
+  </div>
+  <div>
+    <dt>계좌번호</dt>
+    <dd>{{ masked }}</dd>
+  </div>
+  <div class="wide">
+    <dt>예금주</dt>
+    <dd>{{ me()?.display_name }}</dd>
+  </div>
+</dl>
+
+<app-card heading="새 통장사본">
+  <table>
+    <thead>
+      <tr>
+        <th scope="col">첨부 파일</th>
+        <th scope="col">형식</th>
+        <th scope="col">상태</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>{{ fileName }}</td>
+        <td>PDF</td>
+        <td>첨부 완료</td>
+      </tr>
+    </tbody>
+  </table>
+</app-card>
+
+<app-info-box heading="입력한 계좌와 PDF를 함께 확인해요">
+  변경 증빙이 검토 대상으로 표시되고 담당자에게 변경 알림이 남아요. 승인 결과는 서비스 알림으로
+  받아요.
+</app-info-box>
+
+@if (replaces(); as old) {
+  <app-info-box tone="amber" heading="이전 변경 요청이 대체돼요">
+    검토 중인 {{ old.bank }} {{ old.account_number_masked }} 요청은 이 요청으로 바뀌어요.
+  </app-info-box>
+}
+
+@if (error(); as message) {
+  <p class="error" role="alert">{{ message }}</p>
+}
+
+@if (sending()) {
+  <div
+    class="progress"
+    role="progressbar"
+    aria-valuemin="0"
+    aria-valuemax="100"
+    aria-label="통장사본 업로드 진행률"
+    [attr.aria-valuenow]="progress()"
+  >
+    <div class="progress-fill" [style.width.%]="progress()"></div>
+  </div>
+}
+
+<div class="actions">
+  <button appButton type="button" [disabled]="sending()" (click)="submit()">
+    계좌 변경 검토 요청
+  </button>
+  <button appButton variant="secondary" type="button" [disabled]="sending()" (click)="cancel()">
+    취소
+  </button>
+</div>

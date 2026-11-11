@@ -1,0 +1,110 @@
+<input
+  #picker
+  type="file"
+  accept="application/pdf,.pdf"
+  hidden
+  [attr.aria-label]="title() + ' 파일 고르기'"
+  (change)="onPicked(picker)"
+/>
+
+<div
+  class="panel"
+  [class.ready]="!!current() && !busy()"
+  [class.saved]="saved()"
+  [class.dragging]="dragging()"
+  (dragover)="onDragOver($event)"
+  (dragleave)="dragging.set(false)"
+  (drop)="onDrop($event)"
+>
+  @if (state(); as s) {
+    @if (s.kind === 'uploading') {
+      <span class="icon-box">
+        <ng-container *ngTemplateOutlet="uploadIcon" />
+      </span>
+      <strong>업로드하고 있어요</strong>
+      <span class="meta">{{ s.name }}</span>
+      <div
+        class="progress"
+        role="progressbar"
+        aria-valuemin="0"
+        aria-valuemax="100"
+        [attr.aria-valuenow]="s.progress"
+        [attr.aria-label]="title() + ' 업로드 진행률'"
+      >
+        <div class="progress-fill" [style.width.%]="s.progress"></div>
+      </div>
+    } @else if (current(); as f) {
+      <svg class="check" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M5 12.5l4.5 4.5L19 7.5" />
+      </svg>
+      <strong class="ok">{{ saved() ? '임시 저장한 파일' : '파일이 준비됐어요' }}</strong>
+      <span class="meta">{{ meta(f) }}</span>
+      <!-- "미리보기" is hidden: the file API only sends an attachment (api.md) -->
+      <button
+        appButton
+        variant="secondary"
+        type="button"
+        [disabled]="!canPick()"
+        (click)="picker.click()"
+      >
+        파일 변경
+      </button>
+    } @else {
+      <span class="icon-box">
+        <ng-container *ngTemplateOutlet="uploadIcon" />
+      </span>
+      <strong>준비한 PDF를 여기에 놓아주세요</strong>
+      <span class="sub">버튼을 눌러 파일을 골라도 좋아요.</span>
+      <button
+        appButton
+        variant="secondary"
+        type="button"
+        [disabled]="!canPick()"
+        (click)="picker.click()"
+      >
+        PDF 파일 선택
+      </button>
+    }
+  }
+</div>
+
+<span class="sr-only" aria-live="polite">{{ announcement() }}</span>
+
+@if (state(); as s) {
+  @if (s.kind === 'invalid') {
+    <div class="alert invalid" role="alert">
+      <strong>{{ s.title }}</strong>
+      <p>{{ s.message }}</p>
+      <button
+        appButton
+        variant="secondary"
+        type="button"
+        [disabled]="!canPick()"
+        (click)="picker.click()"
+      >
+        PDF 파일 다시 선택
+      </button>
+    </div>
+  } @else if (s.kind === 'failed') {
+    <div class="alert failed" role="alert">
+      <strong>파일을 업로드하지 못했어요</strong>
+      <p>연결 상태를 확인하고 다시 시도해주세요.</p>
+      <button appButton variant="secondary" type="button" [disabled]="!canPick()" (click)="retry()">
+        다시 업로드
+      </button>
+    </div>
+  }
+}
+
+<ng-template #uploadIcon>
+  <svg viewBox="0 0 24 24" aria-hidden="true">
+    <path
+      d="M12 16V5 M7.5 9.5L12 5l4.5 4.5 M5 15v3a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-3"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    />
+  </svg>
+</ng-template>

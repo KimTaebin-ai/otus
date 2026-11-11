@@ -1,0 +1,55 @@
+# OTUS 설치 및 배포 (Linux x86_64 / zsh / VirtualBox)
+# 준비: VirtualBox, FUSE, git, curl, python3, sha256sum
+# 새 터미널에서 아래 전체를 붙여넣거나, deploy/에서 bash install.txt로 실행한다.
+# 별도 Bash에서 실행하므로 설치 명령이 실패해도 현재 터미널은 닫히지 않는다.
+# 상세 장애 해결은 fix.md 참고.
+bash <<'OTUS_INSTALL'
+set -euo pipefail
+trap 'printf "\n설치 중단: 설치 블록 %s번째 줄 (종료 코드 %s). 위 오류를 확인하세요.\n" "$LINENO" "$?" >&2' ERR
+
+# 1. Vagrant 설치
+mkdir -p "$HOME/goinfre/vagrant_bin" \
+  "$HOME/goinfre/.vagrant.d" "$HOME/goinfre/VirtualBox-VMs"
+cd "$HOME/goinfre/vagrant_bin"
+
+curl -fLO https://releases.hashicorp.com/vagrant/2.4.9/vagrant_2.4.9_linux_amd64.zip
+curl -fLO https://releases.hashicorp.com/vagrant/2.4.9/vagrant_2.4.9_SHA256SUMS
+grep ' vagrant_2.4.9_linux_amd64.zip$' vagrant_2.4.9_SHA256SUMS | sha256sum -c -
+python3 -m zipfile -e vagrant_2.4.9_linux_amd64.zip .
+chmod +x vagrant
+
+# 2. 환경 설정
+# 아래 3줄을 ~/.zshrc에도 한 번만 추가한다. 기존 Vagrant 설정이 있으면 교체한다.
+# TMPDIR을 사용자 폴더로 지정하면 VirtualBox 통신 오류가 발생할 수 있다.
+export PATH="$HOME/goinfre/vagrant_bin:$PATH"
+export VAGRANT_HOME="$HOME/goinfre/.vagrant.d"
+export TMPDIR=/tmp
+
+vagrant --version
+VBoxManage --version
+VBoxManage setproperty machinefolder "$HOME/goinfre/VirtualBox-VMs"
+
+# 3. 저장소 준비 및 배포 (clone에는 GitHub SSH 키 필요)
+if [ ! -e "$HOME/goinfre/42.Zip-team03/.git" ]; then
+  git clone git@github.com:42gyeongsan-hackathon-2026/42.Zip-team03.git \
+    "$HOME/goinfre/42.Zip-team03"
+fi
+cd "$HOME/goinfre/42.Zip-team03/deploy"
+
+# VM 필수 패키지 설치와 컨테이너 빌드는 자동으로 진행된다. 첫 실행은 수 분 걸린다.
+# .env가 없으면 로컬 데모 설정, 있으면 기존 설정을 사용한다.
+# 로컬 .env: APP_ORIGIN=https://localhost:8443, SITE_ADDRESS=localhost
+vagrant up
+
+# 기존 VM에 프로비저닝 변경까지 적용하려면: vagrant up --provision
+# /vagrant 공유 폴더가 없으면: vagrant reload --provision
+
+# 4. 확인
+vagrant status
+curl --noproxy '*' -skf https://localhost:8443/api/health
+# 기대 결과: {"scanner":"ready","status":"ok"}
+# 접속: https://localhost:8443 (로컬 인증서 경고가 표시될 수 있음)
+# 데모 계정: dongmin, seoyeon 또는 새 ID
+# 데모 환경 기능 검증: bash ../scripts/smoke.sh https://localhost:8443
+# COM 오류, 부팅 대기, 포트 충돌 등의 복구 절차는 fix.md 참고.
+OTUS_INSTALL

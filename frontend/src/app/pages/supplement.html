@@ -1,0 +1,119 @@
+<header class="page-head">
+  <p class="eyebrow">한 가지만 더 확인해주세요</p>
+  <div class="title-row">
+    <h1>{{ heading() }}</h1>
+    <span class="tag">보완 요청</span>
+  </div>
+  <p class="desc">
+    아래 안내를 보고 {{ labels().join(', ') }}{{ partial() ? '만' : ' 모두' }} 다시 올려주세요.
+  </p>
+</header>
+
+<app-info-box tone="red" [heading]="labels().join(', ') + objectOf() + ' 다시 올려주세요'">
+  {{ requestedComment() }}
+</app-info-box>
+
+@if (loadError(); as message) {
+  <p class="load-error" role="alert">{{ message }}</p>
+}
+
+<div class="columns">
+  <app-card
+    [heading]="types().length === 1 ? labels()[0] : '다시 올릴 서류 ' + types().length + '개'"
+  >
+    @for (type of types(); track type) {
+      <section class="doc">
+        @if (types().length > 1) {
+          <h3>{{ labels()[$index] }}</h3>
+        }
+        @if (previous(type); as prev) {
+          <div class="previous">
+            <span class="caption">이전 제출 파일</span>
+            <span class="file">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z M14 3v5h5 M9 13h6 M9 17h6"
+                />
+              </svg>
+              {{ prev.original_name }}
+            </span>
+          </div>
+        }
+        <app-doc-guide [docTypes]="[type]" [compact]="true" />
+        <h4>새 파일</h4>
+        <app-upload-slot
+          [submissionId]="draft()?.id ?? null"
+          [docType]="type"
+          [description]="description(type)"
+          [file]="fileOf(type)"
+          [disabled]="!open() || submitting()"
+          (uploaded)="onUploaded($event)"
+        />
+      </section>
+    }
+    @if (ready() && open()) {
+      <p class="confirm">
+        <span aria-hidden="true">✓</span>
+        {{
+          issuedFrom() && needsIssueDate()
+            ? issuedFrom() + ' 이후에 발급된 서류인지 확인했어요.'
+            : '발급 기준에 맞는 서류인지 확인했어요.'
+        }}
+      </p>
+    }
+    <p class="foot">새 파일을 제출해도 이전 파일과 확인 기록은 그대로 남아요.</p>
+  </app-card>
+
+  <app-card heading="검토 기록">
+    <div class="entry">
+      <p class="when request">보완 요청</p>
+      <p class="muted">운영 담당자<br />{{ requestedComment() }}</p>
+    </div>
+    <hr />
+    <div class="entry">
+      <p class="when">{{ firstSubmitted() }} <strong>최초 제출</strong></p>
+      @for (name of firstFileNames(); track name) {
+        <p class="caption">{{ name }}</p>
+      }
+    </div>
+    @if (deadline(); as at) {
+      <hr />
+      <div class="entry">
+        <p class="caption">보완 제출 기한</p>
+        <p class="deadline">{{ at }}</p>
+        <p class="muted">
+          @if (partial()) {
+            다른 서류는 잘 확인했어요.<br />
+          }
+          안내한 파일 {{ leftOver() }} 다시 올려주세요.
+        </p>
+      </div>
+    }
+  </app-card>
+</div>
+
+<footer class="bar">
+  @if (submitError(); as message) {
+    <p class="status error" role="alert">{{ message }}</p>
+  } @else if (!open()) {
+    <p class="status">{{ month() }}월 접수가 끝났어요. 다음 제출 일정은 운영팀에 문의해주세요.</p>
+  } @else if (saved()) {
+    <p class="status" aria-live="polite">임시 저장됐어요. 다음에 이어서 마무리할 수 있어요.</p>
+  } @else if (ready()) {
+    <p class="status ready" aria-live="polite">새 PDF {{ readyCount() }}개가 준비되었어요.</p>
+  } @else {
+    <p class="status" aria-live="polite">새 PDF를 올리면 제출할 수 있어요.</p>
+  }
+  <div class="actions">
+    @if (open()) {
+      <button appButton variant="secondary" type="button" [disabled]="!canSave()" (click)="save()">
+        임시 저장
+      </button>
+      <button appButton type="button" [disabled]="!canSubmit()" (click)="submit()">
+        보완 서류 다시 제출하기 →
+      </button>
+    } @else {
+      <button appButton type="button" disabled>제출 기간 종료</button>
+    }
+  </div>
+</footer>

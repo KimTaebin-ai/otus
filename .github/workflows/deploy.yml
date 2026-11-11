@@ -1,0 +1,175 @@
+name: Deploy OTUS to AWS EC2
+
+on:
+  push:
+    branches: [deploy]
+  pull_request:
+    branches: [deploy]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  validate:
+    name: Validate deployment scripts
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Check Bash syntax and common errors
+        run: |
+          bash -n deploy/start-podman.sh
+          shellcheck deploy/start-podman.sh
+
+  deploy:
+    name: Deploy OTUS with Podman
+    needs: validate
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/deploy'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    environment: production
+    concurrency:
+      group: otus-production-deploy
+      cancel-in-progress: false
+    env:
+      EC2_HOST: ${{ secrets.EC2_HOST }}
+      EC2_USER: ${{ secrets.EC2_USER }}
+      DEPLOY_DIR: ${{ vars.DEPLOY_DIR || '/home/ubuntu/42.Zip-team03' }}
+
+    steps:
+      - name: Checkout the triggering commit
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      # Required production secrets: EC2_HOST, EC2_USER, EC2_SSH_KEY,
+      # EC2_KNOWN_HOSTS (verified known_hosts entries), PRODUCTION_ENV (.env text).
+      - name: Validate configuration and configure SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.EC2_KNOWN_HOSTS }}
+          PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
+        run: |
+          set -euo pipefail
+          umask 077
+          for name in EC2_HOST EC2_USER SSH_PRIVATE_KEY SSH_KNOWN_HOSTS PRODUCTION_ENV; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Required deployment secret is empty: $name"
+              exit 1
+            fi
+          done
+          [[ "$EC2_HOST" =~ ^[a-zA-Z0-9][a-zA-Z0-9.-]*$ ]]
+          [[ "$EC2_USER" =~ ^[a-z_][a-z0-9_-]*$ ]]
+          # This path is also passed through the remote shell and rsync.
+          [[ "$DEPLOY_DIR" =~ ^/[a-zA-Z0-9._/-]+$ && "$DEPLOY_DIR" != / ]]
+          [[ "$DEPLOY_DIR/" != *'/../'* && "$DEPLOY_DIR/" != *'/./'* ]]
+
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/otus_deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<SSH
+          Host otus-ec2
+            HostName ${EC2_HOST}
+            User ${EC2_USER}
+            IdentityFile ~/.ssh/otus_deploy_key
+            IdentitiesOnly yes
+            BatchMode yes
+            StrictHostKeyChecking yes
+            ConnectTimeout 15
+            ServerAliveInterval 30
+            ServerAliveCountMax 10
+          SSH
+
+      - name: Prepare EC2 tools and rootless Podman
+        run: |
+          # DEPLOY_DIR is validated above and intentionally expanded on the runner.
+          # shellcheck disable=SC2029
+          ssh otus-ec2 "bash -se -- '$DEPLOY_DIR'" <<'REMOTE'
+          set -euo pipefail
+          # Ubuntu EC2's SSH user needs passwordless sudo for initial provisioning.
+          missing=false
+          for command in podman make curl openssl rsync python3 newuidmap newgidmap slirp4netns fuse-overlayfs; do
+            command -v "$command" >/dev/null 2>&1 || missing=true
+          done
+          python3 -c 'import yaml' 2>/dev/null || missing=true
+          if [[ "$missing" == true ]]; then
+            sudo -n apt-get update
+            sudo -n env DEBIAN_FRONTEND=noninteractive apt-get install -y \
+              podman make curl openssl rsync python3 python3-yaml ca-certificates \
+              uidmap slirp4netns fuse-overlayfs dbus-user-session
+          fi
+          if [[ "$(id -u)" != 0 ]]; then
+            if [[ "$(loginctl show-user "$(id -un)" -p Linger --value)" != yes ]]; then
+              sudo -n loginctl enable-linger "$(id -un)"
+            fi
+            if [[ ! -d "/run/user/$(id -u)" ]]; then
+              sudo -n systemctl start "user@$(id -u).service"
+            fi
+          fi
+          mkdir -p -- "$1/deploy"
+          test -w "$1/deploy"
+          REMOTE
+
+      - name: Sync source while preserving server secrets and data
+        run: |
+          rsync -az --delete \
+            --exclude='/.git/' \
+            --exclude='/.github/' \
+            --exclude='.env' \
+            --exclude='.env.*' \
+            --exclude='/deploy/secrets.yaml' \
+            --exclude='/deploy/.vagrant/' \
+            --exclude='/backend/data/' \
+            --exclude='/e2e/artifacts/' \
+            --exclude='node_modules/' \
+            --exclude='target/' \
+            --exclude='.venv/' \
+            --exclude='.angular/' \
+            -e ssh ./ "otus-ec2:${DEPLOY_DIR}/"
+
+      - name: Upload production environment atomically
+        env:
+          PRODUCTION_ENV: ${{ secrets.PRODUCTION_ENV }}
+        run: |
+          set -euo pipefail
+          # shellcheck disable=SC2029
+          printf '%s\n' "$PRODUCTION_ENV" | ssh otus-ec2 \
+            "umask 077; cat > '$DEPLOY_DIR/deploy/.env.next' && mv -f '$DEPLOY_DIR/deploy/.env.next' '$DEPLOY_DIR/deploy/.env'"
+
+      - name: Build, deploy and check application readiness
+        run: |
+          # shellcheck disable=SC2029
+          ssh otus-ec2 "bash -se -- '$DEPLOY_DIR' '$EC2_HOST'" <<'REMOTE'
+          set -euo pipefail
+          cd -- "$1"
+          test -s deploy/.env
+          # Fallback for an unset APP_ORIGIN or the localhost:4200 development default.
+          # An explicit production HTTPS origin takes priority.
+          export OTUS_DEPLOY_HOST="$2"
+          # Production uses 42 OAuth even if PRODUCTION_ENV contains demo defaults.
+          export OTUS_REQUIRE_OAUTH=true
+          bash ./deploy/start-podman.sh "$PWD"
+          REMOTE
+
+      - name: Deployment summary and SSH cleanup
+        if: always()
+        env:
+          DEPLOY_BRANCH: ${{ github.ref_name }}
+          DEPLOY_COMMIT: ${{ github.sha }}
+          DEPLOY_RESULT: ${{ job.status }}
+        run: |
+          rm -f ~/.ssh/otus_deploy_key ~/.ssh/config ~/.ssh/known_hosts
+          {
+            echo '## OTUS Deployment'
+            echo "- Branch: $DEPLOY_BRANCH"
+            echo "- Commit: $DEPLOY_COMMIT"
+            echo '- Target: AWS EC2, HTTPS port 8443'
+            echo "- Result: $DEPLOY_RESULT"
+          } >> "$GITHUB_STEP_SUMMARY"

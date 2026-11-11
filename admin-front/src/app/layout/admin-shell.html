@@ -1,0 +1,163 @@
+<aside class="sidebar">
+  <a class="logo" routerLink="/" [queryParams]="{ month: selectedMonth() }">
+    <span class="logo-name">{{ brand }}</span>
+    <span class="logo-tagline">관리자</span>
+  </a>
+
+  <nav aria-labelledby="menu-label">
+    <p id="menu-label" class="section-label">운영 메뉴</p>
+    <ul>
+      @for (item of menu(); track item.path) {
+        <li>
+          <a
+            [routerLink]="item.path"
+            [queryParams]="{ month: selectedMonth() }"
+            [class.active]="item.path === activePath()"
+            [attr.aria-current]="item.path === activePath() ? 'page' : null"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              @switch (item.icon) {
+                @case ('dashboard') {
+                  <path d="M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z" />
+                }
+                @case ('upload') {
+                  <path d="M12 15V4 M7 9l5-5 5 5 M4 15v4a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-4" />
+                }
+                @case ('users') {
+                  <path
+                    d="M9 4a4 4 0 1 0 0 8a4 4 0 1 0 0-8z M2 21v-1a6 6 0 0 1 12 0v1 M16 4.5a4 4 0 0 1 0 7 M19 15a6 6 0 0 1 3 5v1"
+                  />
+                }
+                @case ('bell') {
+                  <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0" />
+                }
+                @case ('calendar') {
+                  <path
+                    d="M5 5h14a1 1 0 0 1 1 1v14H4V6a1 1 0 0 1 1-1z M8 3v4 M16 3v4 M4 10h16 M8 14h2 M14 14h2 M8 17h2"
+                  />
+                }
+              }
+            </svg>
+            {{ item.label }}
+          </a>
+        </li>
+      }
+    </ul>
+  </nav>
+
+  @if (auth.me(); as me) {
+    <div class="user">
+      <span class="avatar" aria-hidden="true">{{ initial() }}</span>
+      <span class="user-text">
+        <span class="user-name">{{ me.display_name }}</span>
+        <span class="user-meta">{{ roleLabels[me.role] }}</span>
+      </span>
+    </div>
+  }
+</aside>
+
+<div class="main">
+  <header class="topbar">
+    <div class="topbar-context">
+      @if (window(); as w) {
+        <div class="review-window" role="group" aria-label="검토 기간 이동">
+          <button
+            type="button"
+            class="window-arrow"
+            aria-label="이전 검토 기간"
+            (click)="stepWindow(-1)"
+          >
+            ‹
+          </button>
+          <p>
+            <strong>{{ w.title }}</strong>
+            <span>{{ w.range }}</span>
+            @if (months.offset() < 0) {
+              <em>지난 검토</em>
+            }
+          </p>
+          <button
+            type="button"
+            class="window-arrow"
+            aria-label="다음 검토 기간"
+            [disabled]="!months.canGoNext()"
+            (click)="stepWindow(1)"
+          >
+            ›
+          </button>
+        </div>
+      }
+      @if (monthError()) {
+        <button type="button" class="logout" (click)="loadCurrentMonth()">
+          현재 월 다시 불러오기
+        </button>
+      }
+      <p class="crumb">
+        운영
+        @if (crumb()) {
+          <span aria-hidden="true">/</span> {{ crumb() }}
+        }
+      </p>
+    </div>
+    <div class="topbar-right">
+      <div class="bell">
+        <button
+          type="button"
+          class="bell-button"
+          aria-label="교육생 취업 여부 및 계좌 정보 변경 알림"
+          [attr.aria-expanded]="bellOpen()"
+          (click)="toggleBell()"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0" />
+          </svg>
+          @if (activity.unread() > 0) {
+            <span class="badge" role="status"
+              >{{ activity.unread() > 9 ? '9+' : activity.unread()
+              }}<span class="sr-only"> 개의 새 알림</span></span
+            >
+          }
+        </button>
+        @if (bellOpen()) {
+          <div class="bell-panel" role="region" aria-label="교육생 취업 여부 및 계좌 정보 변경">
+            <p class="bell-title">교육생 취업 여부 및 계좌 정보 변경</p>
+            @if (activity.browserState() === 'default') {
+              <button type="button" class="bell-browser" (click)="activity.enableBrowser()">
+                브라우저 알림 켜기 — 다른 탭에 있어도 새 변경을 알려드려요
+              </button>
+            } @else if (activity.browserState() === 'denied') {
+              <p class="bell-empty">브라우저 알림이 꺼져 있어요. 사이트 설정에서 켤 수 있어요.</p>
+            }
+            @if (activity.failed()) {
+              <p class="bell-empty" role="alert">알림을 불러오지 못했어요. 곧 다시 시도해요.</p>
+            }
+            <ul>
+              @for (item of activity.items().slice(0, 8); track item.id) {
+                <li>
+                  <a
+                    [routerLink]="['/users', item.user.id]"
+                    [queryParams]="{ month: selectedMonth() }"
+                    (click)="bellOpen.set(false)"
+                    >{{ activityText(item) }}</a
+                  >
+                  <time [attr.datetime]="item.occurred_at">{{
+                    item.occurred_at.slice(5, 16).replace('T', ' ')
+                  }}</time>
+                </li>
+              } @empty {
+                @if (!activity.failed()) {
+                  <li class="bell-empty">최근 변경 사항이 없어요.</li>
+                }
+              }
+            </ul>
+          </div>
+        }
+      </div>
+      <span class="avatar sm" aria-hidden="true">{{ initial() }}</span>
+      <button type="button" class="logout" (click)="logout()">로그아웃</button>
+    </div>
+  </header>
+  <main class="content">
+    <router-outlet (activate)="activePage.set($event)" (deactivate)="activePage.set(null)" />
+  </main>
+</div>

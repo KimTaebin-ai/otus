@@ -1,0 +1,127 @@
+<app-page-header
+  eyebrow="운영 설정"
+  heading="제출 기간 설정"
+  description="상단에서 선택한 월의 접수 시작일과 마감일을 설정하세요."
+/>
+<app-info-box heading="설정한 기간에만 서류를 제출할 수 있어요">
+  모든 시간은 한국 시간(KST)입니다. 기간이 없거나 마감되면 제출·보완·재검토 요청·제출 안내가
+  제한되며, 검토 대기 서류의 승인은 가능합니다.
+</app-info-box>
+@if (loading()) {
+  <p role="status">제출 기간을 불러오고 있어요.</p>
+}
+@if (error(); as error) {
+  <p class="error" role="alert">{{ error }}</p>
+  @if (!page()) {
+    <button appButton variant="secondary" (click)="load()">다시 불러오기</button>
+  }
+}
+@if (message(); as message) {
+  <p class="success" role="status">{{ message }}</p>
+}
+@if (page(); as page) {
+  @if (!page.can_manage) {
+    <p class="muted">운영 담당자와 관리자가 제출 기간을 추가·수정할 수 있습니다.</p>
+  }
+  @if (selected(); as row) {
+    <app-card
+      id="period-editor"
+      tabindex="-1"
+      [heading]="monthLabel(row.target_month) + ' 제출 기간'"
+    >
+      <div class="period-summary">
+        <span class="period-state" [class.open]="row.state === 'open'">{{
+          labels[row.state]
+        }}</span>
+        <a routerLink="/submissions" [queryParams]="{ month: row.target_month }"
+          >이 달 제출 내역 보기 →</a
+        >
+      </div>
+      @if (row.version === null && editable()) {
+        <p class="muted">
+          아직 제출 기간이 없습니다. 시작일과 마감일을 저장하면 접수 일정이 등록됩니다.
+        </p>
+      }
+      <form (ngSubmit)="save()">
+        <fieldset [disabled]="!editable() || saving() || loading()">
+          <label for="period-start"
+            >접수 시작일 (KST)
+            <input
+              id="period-start"
+              name="start"
+              type="datetime-local"
+              step="1"
+              required
+              [min]="bounds()!.start"
+              [max]="bounds()!.end"
+              [ngModel]="start()"
+              (ngModelChange)="start.set($event)"
+            />
+          </label>
+          <label for="period-end"
+            >접수 마감일 (KST, 입력한 시각까지)
+            <input
+              id="period-end"
+              name="end"
+              type="datetime-local"
+              step="1"
+              required
+              [min]="bounds()!.start"
+              [max]="bounds()!.end"
+              [ngModel]="end()"
+              (ngModelChange)="end.set($event)"
+            />
+          </label>
+        </fieldset>
+        @if (editable()) {
+          <p class="muted">
+            해당 월 안에서 설정할 수 있습니다. 저장하면 교육생의 접수 가능 시간이 즉시 바뀝니다.
+          </p>
+          @if (!body()) {
+            <p class="error">대상 월 안에서 시작과 마감 시각을 확인해 주세요.</p>
+          }
+          <button
+            appButton
+            type="submit"
+            [disabled]="!body() || !changed() || saving() || loading()"
+          >
+            {{ saving() ? '저장 중…' : '제출 기간 저장' }}
+          </button>
+        } @else if (row.target_month < page.current_month) {
+          <p class="muted">지난달 기간은 조회만 가능합니다.</p>
+        }
+      </form>
+      <details class="history">
+        <summary>변경 이력 · 최근 50건</summary>
+        @if (historyLoading()) {
+          <p role="status">변경 이력을 불러오고 있어요.</p>
+        }
+        @if (historyError(); as error) {
+          <p class="error" role="alert">{{ error }}</p>
+        }
+        @for (change of history(); track change.version) {
+          <div class="history-row">
+            <p>
+              {{ dateTime(change.created_at) }} · {{ change.actor_name }} ·
+              {{ change.previous_opens_at ? '기간 수정' : '기간 추가' }}
+            </p>
+            @if (change.previous_opens_at && change.previous_closes_at) {
+              <p class="muted">
+                변경 전: {{ dateTime(change.previous_opens_at) }} ~
+                {{ dateTime(lastMoment(change.previous_closes_at)) }}
+              </p>
+            }
+            <p>
+              저장 기간: {{ dateTime(change.opens_at) }} ~
+              {{ dateTime(lastMoment(change.closes_at)) }}
+            </p>
+          </div>
+        } @empty {
+          @if (!historyLoading() && !historyError()) {
+            <p class="muted">기록된 변경 이력이 없습니다.</p>
+          }
+        }
+      </details>
+    </app-card>
+  }
+}

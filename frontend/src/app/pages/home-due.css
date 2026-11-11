@@ -1,0 +1,147 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* ---- Page head ---- */
+
+.page-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.page-head p,
+.page-head h1 {
+  margin: 0;
+}
+
+.eyebrow {
+  font-size: var(--font-size-caption);
+  color: var(--color-teal);
+}
+
+h1 {
+  font-size: var(--font-size-page-title);
+  line-height: 1.3;
+  font-weight: var(--font-weight-bold);
+}
+
+.meta {
+  font-size: var(--font-size-caption);
+  color: var(--color-muted);
+}
+
+/* ---- Due (final U03-home-due.png) ---- */
+
+.due {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.top {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--width-aside);
+  gap: var(--space-3);
+}
+
+/* same width as the submitted layout's hero */
+.top > * {
+  grid-column: 1;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-alert);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.stat-label,
+.stat-sub {
+  font-size: var(--font-size-caption);
+  color: var(--color-muted);
+}
+
+.stat strong {
+  font-size: var(--font-size-feature-title);
+  font-weight: var(--font-weight-bold);
+}
+
+/* final's due info box has no shield icon, unlike app-info-box */
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--space-1) / 2);
+  padding: var(--space-alert);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-mint);
+}
+
+.notice strong {
+  font-size: var(--font-size-alert-title);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-teal);
+}
+
+.notice p {
+  margin: 0;
+  font-size: var(--font-size-caption);
+  color: var(--color-muted);
+}
+
+.actions {
+  display: flex;
+  gap: calc(var(--space-1) * 1.5);
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+}
+
+.pair app-card {
+  gap: var(--space-1);
+}
+
+.lines {
+  margin: 0;
+  line-height: 1.7;
+  color: var(--color-muted);
+}
+
+.footnote {
+  margin: var(--space-1) 0 0;
+  font-size: var(--font-size-caption);
+  color: var(--color-muted);
+}
+
+@media (max-width: 1100px) {
+  .top {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .stats,
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}

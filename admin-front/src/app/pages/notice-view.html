@@ -1,0 +1,169 @@
+<p>미제출 또는 지원금 시간 구간을 선택해 안내하세요. 취업 중인 분은 자동으로 제외돼요.</p>
+@if (view().audience !== 'unsubmitted') {
+  <p class="hint">
+    하루 최대 12시간을 반영한 최근 월별 집계 기준이에요. 최종 지급 확정 여부와는 별개예요.
+  </p>
+  @if (view().hoursUnknown) {
+    <p role="status">
+      학습 시간 미집계·확인 불가 {{ view().hoursUnknown }}명은 대상에서 제외했어요.
+    </p>
+  }
+}
+
+@if (stage() === 'compose' && actionError(); as message) {
+  <p role="alert">{{ message }}</p>
+}
+@if (emailAvailable() === false) {
+  <p role="status">이메일 발송이 설정되지 않았어요. 앱 내부 알림은 보낼 수 있어요.</p>
+}
+
+<div class="cards">
+  @for (card of cards(); track card.label) {
+    <app-stat-card
+      layout="row"
+      [label]="card.label"
+      [value]="card.value"
+      [sub]="card.sub"
+      [tone]="card.tone"
+    />
+  }
+</div>
+
+<div class="columns">
+  <app-card [heading]="'발송 대상 ' + view().targets.length + '명'">
+    @if (view().targets.length) {
+      <app-data-table>
+        <table>
+          <colgroup>
+            <col class="col-name" />
+            <col class="col-login" />
+            <col class="col-employed" />
+            <col />
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">사용자</th>
+              <th scope="col">login</th>
+              <th scope="col">취업</th>
+              <th scope="col">상태</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (target of view().targets; track target.login) {
+              <tr>
+                <td class="name">{{ target.name }}</td>
+                <td class="muted">
+                  {{ target.login }}
+                  @if (selectedChannel() !== 'service' && targetEmails()[target.login]; as email) {
+                    <small class="recipient-email">{{ email }}</small>
+                  }
+                </td>
+                <td class="muted">{{ target.employed ? '취업 중' : '미취업' }}</td>
+                <td>
+                  @if (view().audience === 'unsubmitted') {
+                    <app-status-badge [status]="target.status === 'draft' ? 'draft' : 'missing'" />
+                  } @else {
+                    {{ audienceLabel(view().audience) }}
+                    <small class="recipient-email">{{ dateTime(target.asOf ?? null) }} 집계</small>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </app-data-table>
+      <div class="skipped">
+        <p class="skipped-head">{{ skipped().head }}</p>
+        @if (skipped().names) {
+          <p>{{ skipped().names }}</p>
+        }
+        <p>{{ skipped().note }}</p>
+      </div>
+    } @else {
+      <div class="empty">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
+        <strong>지금은 안내할 분이 없어요</strong>
+        @for (line of reason(); track line) {
+          <p>{{ line }}</p>
+        }
+      </div>
+      <p class="foot">선택한 대상 조건과 최신 취업 상태를 기준으로 확인해요.</p>
+    }
+  </app-card>
+
+  <app-card heading="사용자에게 이렇게 보여요">
+    <div class="channel">
+      <span>발송 채널</span>
+      <span class="pill">{{ channel() }}</span>
+    </div>
+    <div class="field">
+      <span class="field-label">알림 제목</span>
+      <div class="box">{{ title() }}</div>
+    </div>
+    <div class="field">
+      <span class="field-label">알림 내용</span>
+      <div class="box">
+        @for (paragraph of body(); track $index) {
+          <p>
+            @for (line of paragraph; track line) {
+              {{ line }}<br />
+            }
+          </p>
+        }
+      </div>
+    </div>
+    @if (selectedChannel() !== 'email') {
+      <p class="hint">앱 내부 알림은 교육생 화면 상단의 알림 벨에서 확인할 수 있어요.</p>
+      <p class="hint">이동 버튼: {{ link() }}</p>
+    } @else {
+      <p class="hint">선택한 대상의 이메일로 안내해요.</p>
+    }
+    @if (view().audience === 'unsubmitted') {
+      <p class="hint">제출 월과 마감일은 선택한 월의 접수 일정 기준이에요.</p>
+    }
+    <button
+      appButton
+      type="button"
+      class="wide"
+      [disabled]="
+        busy() ||
+        !view().targets.length ||
+        (selectedChannel() !== 'service' && emailAvailable() !== true)
+      "
+      (click)="review.emit()"
+    >
+      {{ view().targets.length ? '보낼 내용 확인하기 →' : '지금은 보낼 대상이 없어요' }}
+    </button>
+  </app-card>
+</div>
+
+@if (stage() === 'confirm') {
+  <app-notice-confirm
+    [view]="view()"
+    [selectedChannel]="selectedChannel()"
+    [emailAvailable]="emailAvailable()"
+    [busy]="busy()"
+    [uncertain]="uncertain()"
+    [error]="actionError()"
+    (send)="send.emit()"
+    (cancel)="cancel.emit()"
+  />
+}
+@if (stage() === 'sent' && result(); as sent) {
+  <app-notice-sent
+    [result]="sent"
+    [delivery]="delivery()"
+    [emailAvailable]="emailAvailable()"
+    [busy]="busy()"
+    [error]="actionError()"
+    [statusError]="statusError()"
+    [retryConfirm]="retryConfirm()"
+    [retryUncertain]="retryUncertain()"
+    [retryClosed]="retryClosed()"
+    (reviewRetry)="reviewRetry.emit()"
+    (cancelRetry)="cancelRetry.emit()"
+    (retry)="retry.emit()"
+    (refreshStatus)="refreshStatus.emit()"
+    (done)="done.emit()"
+  />
+}

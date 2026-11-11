@@ -1,0 +1,141 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.page-head {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.page-head p,
+.page-head h1 {
+  margin: 0;
+}
+
+.eyebrow {
+  font-size: var(--font-size-caption);
+  color: var(--color-teal);
+}
+
+h1 {
+  font-size: var(--font-size-page-title);
+  line-height: 1.3;
+  font-weight: var(--font-weight-bold);
+}
+
+.desc {
+  color: var(--color-muted);
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.fields .wide {
+  grid-column: 1 / -1;
+}
+
+.fields dt {
+  margin-bottom: var(--space-1);
+  font-weight: var(--font-weight-medium);
+}
+
+.fields dd {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  margin: 0;
+  padding: 0 var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-muted);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 0 var(--space-1);
+  height: 36px;
+  text-align: left;
+}
+
+th {
+  background: var(--color-bg);
+  font-size: var(--font-size-caption);
+  font-weight: var(--font-weight-regular);
+  color: var(--color-muted);
+}
+
+th:first-child {
+  border-radius: var(--radius-sm) 0 0 var(--radius-sm);
+}
+
+th:last-child {
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+th:nth-child(1),
+td:nth-child(1) {
+  width: 60%;
+  overflow-wrap: anywhere;
+}
+
+.error {
+  margin: 0;
+  color: var(--color-red);
+}
+
+.progress {
+  height: var(--height-progress);
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--color-border);
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-teal);
+}
+
+.actions {
+  display: flex;
+  gap: calc(var(--space-1) * 1.5);
+}
+
+@media (max-width: 720px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .fields dd {
+    height: auto;
+    min-height: 48px;
+    padding-block: var(--space-1);
+    overflow-wrap: anywhere;
+  }
+
+  th:nth-child(1),
+  td:nth-child(1) {
+    width: auto;
+  }
+
+  td {
+    height: auto;
+    padding-block: var(--space-1);
+  }
+
+  .actions {
+    flex-direction: column;
+  }
+}

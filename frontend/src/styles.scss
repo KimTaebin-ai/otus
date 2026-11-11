@@ -1,0 +1,47 @@
+/* Global styles. Component styles live next to each component. */
+// Noto Sans KR Variable is self-hosted: the CSP (default-src 'self') blocks external font hosts.
+// One variable font (weights 100–900, 124 unicode-range slices) instead of three static weights.
+@use '@fontsource-variable/noto-sans-kr/wght.css' as noto;
+// shared/styles/_tokens.scss, through stylePreprocessorOptions.includePaths (src/shared) in
+// angular.json. admin-front uses the same file.
+@use 'styles/tokens';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-family);
+  font-size: var(--font-size-body);
+  color: var(--color-ink);
+  background: var(--color-surface);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  /* Korean breaks between words, not inside them; long unbroken strings still wrap */
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+/* Wrapping: balance short titles so a lone word isn't left on the last line, and avoid orphans in
+   paragraphs. Browsers without support ignore these. */
+h1,
+h2,
+h3,
+h4,
+[class*='title'] {
+  text-wrap: balance;
+}
+
+p,
+li {
+  text-wrap: pretty;
+}

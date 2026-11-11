@@ -1,0 +1,85 @@
+<header class="page-head">
+  <p class="eyebrow">SUBMISSION HISTORY</p>
+  <h1>제출 이력</h1>
+  <p class="desc">등록한 서류와 검토 결과를 확인하세요.</p>
+</header>
+
+@if (state(); as s) {
+  @if (s.kind === 'loading') {
+    <app-card heading="제출 이력">
+      <app-spinner size="card" />
+    </app-card>
+  } @else if (s.kind === 'error') {
+    <p class="load-error" role="alert">{{ s.message }}</p>
+  } @else if (s.kind === 'ready' && s.items.length === 0) {
+    <div class="columns">
+      <app-card>
+        <p class="empty">아직 제출한 서류가 없어요.</p>
+      </app-card>
+    </div>
+  }
+}
+
+@if (latest(); as item) {
+  <app-info-box
+    [heading]="latestHeading(item)"
+    [tone]="item.status === 'revision_requested' ? 'red' : 'mint'"
+    >{{ latestBody(item) }}</app-info-box
+  >
+}
+
+@if (missingMonth(); as month) {
+  <div class="columns">
+    <app-card [heading]="formatMonth(month) + ' · 월별 제출 서류'">
+      <span cardAction class="actions"><app-status-badge status="missing" /></span>
+      <p class="empty">아직 제출하지 않았어요.</p>
+      <a class="link" routerLink="/submit">제출하기 →</a>
+    </app-card>
+  </div>
+}
+
+<!-- 여러 건: 월별로 묶어 최신순, 건마다 2열 한 줄 (사용자 결정 2026-10-17, 보완 제출 세션에서 다시 정한다) -->
+@for (group of groups(); track group.month) {
+  <section class="month" [attr.aria-label]="formatMonth(group.month)">
+    @for (item of group.items; track item.id) {
+      <div class="columns">
+        <app-card
+          [heading]="formatMonth(item.target_month) + ' · ' + kindLabels[item.kind] + ' 서류'"
+        >
+          <span cardAction class="actions">
+            @if (canSupplement(item)) {
+              <a class="link" [routerLink]="supplementLink(item)">보완 제출하기 →</a>
+            }
+            <app-status-badge [status]="badgeStatus(item)" />
+          </span>
+          <div class="rows">
+            @for (file of item.files; track file.file_id) {
+              <app-upload-slot mode="view" [docType]="file.doc_type" [file]="file" />
+            }
+          </div>
+        </app-card>
+
+        <app-card heading="접수 정보">
+          <dl class="facts">
+            <div>
+              <dt>제출 월</dt>
+              <dd>{{ formatMonth(item.target_month) }}</dd>
+            </div>
+            <div>
+              <dt>제출 유형</dt>
+              <dd>{{ kindLabels[item.kind] }}</dd>
+            </div>
+            <div>
+              <dt>제출 서류</dt>
+              <dd>{{ item.files.length }}개</dd>
+            </div>
+            <div>
+              <dt>서류 상태</dt>
+              <dd>{{ badgeLabels[item.status] }}</dd>
+            </div>
+          </dl>
+        </app-card>
+      </div>
+    }
+  </section>
+}

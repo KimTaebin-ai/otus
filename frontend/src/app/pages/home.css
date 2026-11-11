@@ -1,0 +1,14 @@
+:host {
+  display: block;
+}
+
+.load-error {
+  margin: 0;
+  color: var(--color-red);
+}
+
+.loading-cards {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

@@ -1,0 +1,57 @@
+<app-page-header
+  eyebrow="지원금 운영"
+  [heading]="title()"
+  description="서류 제출·검토와 시간 요건, 최종 수령 대상을 구분해 확인해요."
+/>
+
+<div class="cards">
+  @for (card of cards(); track card.label) {
+    <app-stat-card [label]="card.label" [value]="card.value" [sub]="card.sub" />
+  }
+</div>
+
+<section class="notice" aria-labelledby="notice-title">
+  <strong id="notice-title">{{ heading() }}</strong>
+  <p>{{ hours() }}</p>
+  @for (line of previous(); track line) {
+    <p>{{ line }}</p>
+  }
+</section>
+
+<div class="actions">
+  <button appButton type="button" routerLink="/users">대상·시간 요건 확인</button>
+  <button appButton variant="secondary" type="button" routerLink="/submissions">
+    월별 제출 내역
+  </button>
+  <button appButton variant="secondary" type="button" routerLink="/notices">
+    제출 안내 보내기
+  </button>
+</div>
+
+<app-card heading="오늘 확인할 업무">
+  <app-data-table [dense]="true">
+    <table>
+      <colgroup>
+        <col class="col-task" />
+        <col class="col-count" />
+        <col />
+      </colgroup>
+      <thead>
+        <tr>
+          <th scope="col">업무</th>
+          <th scope="col">건수</th>
+          <th scope="col">확인 기준</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (row of tasks(); track row.label) {
+          <tr>
+            <td>{{ row.label }}</td>
+            <td>{{ row.count }}</td>
+            <td>{{ row.basis }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </app-data-table>
+</app-card>

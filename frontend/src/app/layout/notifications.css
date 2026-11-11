@@ -1,0 +1,201 @@
+:host {
+  position: relative;
+  display: inline-flex;
+}
+
+.bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-avatar-sm);
+  height: var(--size-avatar-sm);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--color-muted);
+  cursor: pointer;
+}
+
+.bell svg {
+  width: var(--size-icon);
+  height: var(--size-icon);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.dot {
+  position: absolute;
+  top: calc(var(--space-1) / 2);
+  right: calc(var(--space-1) / 2);
+  width: var(--space-1);
+  height: var(--space-1);
+  border-radius: 50%;
+  background: var(--color-teal);
+}
+
+.bell:focus-visible,
+.close:focus-visible {
+  outline: calc(var(--border-width) * 2) solid var(--color-teal);
+  outline-offset: calc(var(--border-width) * 2);
+}
+
+.popover {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + var(--space-1));
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 340px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.popover:focus {
+  outline: none;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+h2 {
+  margin: 0;
+  margin-right: auto;
+  font-size: var(--font-size-card-title);
+  font-weight: var(--font-weight-bold);
+}
+
+.pill {
+  padding: 4px var(--space-2);
+  border-radius: var(--radius-pill);
+  background: var(--color-mint);
+  color: var(--color-teal);
+  font-size: var(--font-size-caption);
+}
+
+.close {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-muted);
+  font: inherit;
+  font-size: var(--font-size-caption);
+  cursor: pointer;
+}
+
+.notice {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-2);
+  border-radius: var(--radius-lg);
+  background: var(--color-mint);
+}
+
+.notice p,
+.notice h3 {
+  margin: 0;
+}
+
+.meta {
+  font-size: var(--font-size-caption);
+  color: var(--color-teal);
+}
+
+h3 {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-bold);
+  overflow-wrap: anywhere;
+}
+
+.body {
+  margin-bottom: var(--space-1);
+  font-size: var(--font-size-body);
+  line-height: 1.7;
+  color: var(--color-muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.notice button {
+  width: 100%;
+}
+
+.empty {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: var(--font-size-body);
+}
+
+.tools {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.notice.read {
+  background: var(--color-bg);
+}
+
+.mark-read {
+  padding: var(--space-1);
+}
+
+.close:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.error {
+  margin: 0;
+  color: var(--color-red);
+  font-size: var(--font-size-body);
+}
+
+@media (max-width: 600px) {
+  :host {
+    position: static;
+  }
+
+  /* fixed + top:auto keeps the flex static position (the bell's top), so push it below the bell */
+  .popover {
+    position: fixed;
+    top: auto;
+    right: var(--space-1);
+    left: var(--space-1);
+    width: auto;
+    max-height: 70vh;
+    margin-top: calc(var(--size-avatar-sm) + var(--space-1));
+    padding: var(--space-2);
+  }
+}
+
+.browser {
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-teal);
+  border-radius: var(--radius-sm);
+  background: var(--color-mint);
+  color: var(--color-teal);
+  font: inherit;
+  font-size: var(--font-size-caption);
+  text-align: left;
+  cursor: pointer;
+}
+
+.browser:focus-visible {
+  outline: calc(var(--border-width) * 2) solid var(--color-teal);
+  outline-offset: calc(var(--border-width) * 2);
+}
