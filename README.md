@@ -390,7 +390,7 @@ vagrant ssh -c 'podman run --rm --network host --shm-size=256m -v /vagrant:/repo
 
 | 이름 | 역할 |
 | --- | --- |
-| 김태빈 (taebkim) | PM / 기획·발표 |
+| 김태빈 (taebkim) | PM / 기획·DB 설계·프론트엔드 리드·발표 |
 | 김동민 (dongkim2) | Frontend |
 | 이재현 (jaehylee) | Backend |
 | 권혁준 (huckwon) | Data / 판별 로직 |
